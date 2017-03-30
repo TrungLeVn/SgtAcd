@@ -96,11 +96,6 @@ setstartacd <- function(object,value){
   vmodel = object@model$vmodel
   mmodel = object@model$mmodel
   dmodel = object@model$dmodel
-  vmodel$external.regressors = object@model$modeldata$vexdata
-  mmodel$external.regressors = object@model$modeldata$mexdata
-  dmodel$shape.regressors = object@model$modeldata$shxdata
-  dmodel$skew.regressors = object@model$modeldata$skxdata
-
   tmp = acdspec( variance.model = vmodel, mean.model = mmodel,
                  distribution.model = dmodel, fixed.pars  = model$fixed.pars,
                  start.pars = as.list(start.pars))
