@@ -14,7 +14,7 @@ double rdist(const double , const double , const double , const int );
 double pdist(const double , const double , const double , const double , const double , const double , const int );
 double qdist(const double ,const double , const double , const double , const double , const double , const int );
 double dsgtB(const double,const double,const double,const double);
-double skewness(const double, const double, const double, const int);
-double kurtosis(const double, const double, const double, const int);
+double skew(const double, const double, const double, const int);
+double kurt(const double, const double, const double, const int);
 #endif /* DISTRIBUTIONS_H */
 

@@ -46,7 +46,7 @@
    }
  }
 void armafilter(int* model, double *pars, int *idx, double *x, double *res,
-                      double *zrf, double *constm, double *condm, int m, int i, int T)
+                      double *zrf, double *constm, double *condm, double h, double sk, double ku, int m, int i, int T)
 {
 /* --------------------------------------------------------------------------------
  * ARFIMA Process :
@@ -57,6 +57,18 @@ void armafilter(int* model, double *pars, int *idx, double *x, double *res,
  * */
 	/*0 constm, 1 condm, 2 res*/
 	constm[i] = pars[0];
+  if(model[3]>0)
+  {
+    constm[i]+=pars[idx[3]]*h;
+  }
+  if(model[4]>0)
+  {
+    constm[i]+=pars[idx[4]]*sk;
+  }
+  if(model[5]>0)
+  {
+    constm[i]+=pars[idx[5]]*ku;
+  }
 	condm[i]+=constm[i];
 	//ARMA initialization
 	if(model[1]>0 || model[2]>0)

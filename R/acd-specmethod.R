@@ -3,10 +3,10 @@
 #' @description  Specify models to estimate with mean, variance and higher moment equations
 #' @title Model specification
 #' @usage function(variance.model = list(model = "sGARCH", garchOrder = c(1, 1),variance.targeting = FALSE),
-#'       mean.model = list(armaOrder = c(0,0), include.mean = TRUE),
-#'       distribution.model = list(model = "sged", skewOrder = c(1,1, 1),skewshock = 1, skewshocktype = 1, skewmodel = "pwl",
-#'                                 shape1Order = c(1, 1, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "pwl",
-#'                                  shape2Order = c(1, 1, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "pwl",exp.rate = 1),
+#'       mean.model = list(armaOrder = c(0,0), include.mean = TRUE, archm = FALSE, skm = FALSE, shm = FALSE),
+#'       distribution.model = list(model = "sgt", skewOrder = c(1,1,1),skewshock = 1, skewshocktype = 1, skewmodel = "pwl", volsk = FALSE,
+#'       shape1Order = c(1, 1, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "pwl", volsh1 = FALSE,
+#'       shape2Order = c(1, 1, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "pwl", volsh2 = FALSE, exp.rate = 1),
 #'       start.pars = list(), fixed.pars = list())
 #' @param variance.model Specification of variance process. Only support
 #'         sGARCH and gjrGARCH. Do not support external regessor.
@@ -116,17 +116,23 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   idx = na.omit(match(names(mean.model), names(mmodel)))
   if (length(idx) > 0)
     for (i in 1:length(idx)) mmodel[idx[i]] = mean.model[i]
-
-  modelinc[2] = mmodel$armaOrder[1]
-  modelinc[3] = mmodel$armaOrder[2]
-  if( as.logical(mmodel$archm) ){
-    modelinc[4] = 1
-  }
-  if( as.logical(mmodel$skm) ){
-    modelinc[5] = 1
-  }
-  if( as.logical(mmodel$shm) ){
-    modelinc[6] = 1
+  if(as.logical(mmodel$archm) || as.logical(mmodel$skm) || as.logical(mmodel$shm))
+  {
+    if(sum(mmodel$armaOrder) > 0){
+      stop("\nacdpec-->error: ARMA specification is not allowed if we allow for either archm, skm or shm.\n", call. = FALSE)
+    }
+    if( as.logical(mmodel$archm) ){
+      modelinc[4] = 1
+    }
+    if( as.logical(mmodel$skm) ){
+      modelinc[5] = 1
+    }
+    if( as.logical(mmodel$shm) ){
+      modelinc[6] = 1
+    }
+  } else{
+    modelinc[2] = mmodel$armaOrder[1]
+    modelinc[3] = mmodel$armaOrder[2]
   }
   if (is.null(mmodel$include.mean))
     modelinc[1] = 1 else modelinc[1] = as.integer(mmodel$include.mean)
@@ -451,7 +457,7 @@ if(dmodel$model == "sst"){
   nx = nx + pn
   pn = 1
   pidx[6, 1] = nx + 1
-  if (pos.matrix[3, 3] == 1) {
+  if (pos.matrix[6, 3] == 1) {
     pn = length(seq(pos.matrix[6, 1], pos.matrix[6, 2], by = 1))
     for (i in 1:pn) {
       pars[(nx + i), 1] = 0
@@ -698,14 +704,14 @@ if(dmodel$model == "sst"){
   nx = nx + pn
   pn = 1
   pidx[26, 1] = nx + 1
-  if (pos.matrix[25, 3] == 1) {
+  if (pos.matrix[26, 3] == 1) {
     pars[nx+pn,3] =1
     pars[nx+pn,1] =0
     if (any(!is.na(match(fixed.names, "sh2gamma"))))
       pars[nx + pn, 2] = 1 else pars[nx + pn, 4] = 1
   }
   pnames = c(pnames,"sh2gamma")
-  pidx[25,2] = nx+pn
+  pidx[26,2] = nx+pn
 
   nx = nx + pn
   pn = 1

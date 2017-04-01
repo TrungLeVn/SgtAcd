@@ -21,14 +21,19 @@
 # include "Sacd.h"
 # include "sgtdistributions.h"
 
-void armafilterC(int *model, double *pars, int *idx, double *x, double *res,
+void armafilterC(int *model, double *pars, int *idx, double *hm, double *skm, double *kum, double *x, double *res,
 		double *zrf, double *constm, double *condm,int *m, int *T)
 {
 	int i;
+   double h = 0;
+  double sk = 0;
+  double ku = 0;
 	for(i=0; i<*T; i++)
 	{
-		armafilter(model, pars, idx, x, res,
-                   zrf, constm, condm, *m, i, *T);
+	  h = hm[i];
+	  sk = skm[i];
+	  ku = kum[i];
+		armafilter(model, pars, idx, x, res, zrf, constm, condm, h, sk, ku, *m, i, *T);
 	}
 }
 void sacd(int *model, double *pars, int *idx, double *hEst, double *x,
@@ -36,74 +41,74 @@ void sacd(int *model, double *pars, int *idx, double *hEst, double *x,
                  double *constm, double *condm, int *m, int *T, double *h, double *z,
                  double *tempskew, double *tempshape1,double *tempshape2, double *skhEst, double *tskew,
                  double *tshape1, double *tshape2,double *sbounds,
-                 double *llh, double *LHT, double *skew, double *kurt)
+                 double *llh, double *LHT, double *skewness, double *kurtosis)
 {
 
   int i;
   double lk=0;
-  /* double hm = 0; */
+   double hm = 0;
 // Handle the initial days with lagged. Start the recursion from day m+1 in which m is maximum order
   for(i=0; i<*m; i++)
   {
-    if(model[10]>0)
+    if(model[13]>0)
     {
       tempskew[i] = skhEst[0];
       tskew[i] = logmap1dT(sbounds[0], sbounds[1], tempskew[i]);
     } else{
-      tskew[i] = pars[idx[7]];
+      tskew[i] = pars[idx[11]];
     }
-    if(model[14]>0)
+    if(model[18]>0)
     {
       tempshape1[i] = skhEst[1];
        tshape1[i] = expmap1dT(sbounds[2], tempshape1[i], sbounds[6]);
       /* tshape1[i] = logmap1dT(sbounds[2], sbounds[3], tempshape1[i]); */
     } else{
-      tshape1[i] = pars[idx[8]];
+      tshape1[i] = pars[idx[12]];
     }
-    if(model[18]>0)
+    if(model[23]>0)
     {
       tempshape2[i] = skhEst[2];
       /* tshape2[i] = expmap2dT(sbounds[4], sbounds[5],tempshape2[i], sbounds[6]);*/
        tshape2[i] = logmap1dT(sbounds[4], sbounds[5],tempshape2[i]);
     } else{
-      tshape2[i] = pars[idx[9]];
+      tshape2[i] = pars[idx[13]];
     }
     h[i] = *hEst;
-    armafilter(model, pars, idx, x, res, zrf, constm, condm, *m, i, *T);
+    skewness[i] = skew(tskew[i], tshape1[i],tshape2[i], model[34]);
+    skewness[i] = kurt(tskew[i], tshape1[i],tshape2[i], model[34]);
+    armafilter(model, pars, idx, x, res, zrf, constm, condm, fabs(*hEst), skewness[i], kurtosis[i], *m, i, *T);
     e[i] = res[i] * res[i];
     z[i] = res[i]/sqrt(fabs(h[i]));
-    LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[30]));
-    skew[i] = skewness( tskew[i], tshape1[i],tshape2[i], model[30]);
-    kurt[i] = kurtosis(tskew[i], tshape1[i],tshape2[i], model[30]);
+    LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[34]));
     lk = lk - LHT[i];
   }
   for (i=*m; i<*T; i++)
   {
     sacdfilter(model, pars, idx, e, *T, i, h);
 // After this step, we have h is a column vector of conditonal variance
-   /* hm = sqrt(fabs(h[i])); */
-    if(model[25]==1){
+   hm = sqrt(fabs(h[i]));
+    if(model[31]==1){
       skewfilter(model, pars, idx, z, tempskew, tskew, sbounds, h, i, *T);
     } else{
       skewfilter(model, pars, idx, res, tempskew, tskew, sbounds, h, i, *T);
     }
-    if(model[26]==1){
+    if(model[32]==1){
       acdshape1filter(model, pars, idx, z, tempshape1, tshape1, sbounds, h, i, *T);
     } else{
       acdshape1filter(model, pars, idx, res, tempshape1, tshape1, sbounds, h, i, *T);
     }
-    if(model[27]==1){
+    if(model[33]==1){
       acdshape2filter(model, pars, idx, z, tempshape2, tshape2, sbounds, h, i, *T);
     } else{
       acdshape2filter(model, pars, idx, res, tempshape2, tshape2, sbounds, h, i, *T);
     }
-    armafilter(model, pars, idx, x, res, zrf, constm, condm, *m, i, *T);
+    skewness[i] = skew(tskew[i], tshape1[i],tshape2[i], model[34]);
+    kurtosis[i] = kurt(tskew[i], tshape1[i],tshape2[i], model[34]);
+    armafilter(model, pars, idx, x, res, zrf, constm, condm, hm, skewness[i], kurtosis[i], *m, i, *T);
     e[i] = res[i] * res[i];
     z[i] = res[i]/sqrt(fabs(h[i]));
-    LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[30]));
+    LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[34]));
     lk = lk - LHT[i];
-    skew[i] = skewness(tskew[i], tshape1[i],tshape2[i], model[30]);
-    kurt[i] = kurtosis(tskew[i], tshape1[i],tshape2[i], model[30]);
   }
   *llh=lk;
 }
@@ -112,77 +117,76 @@ void gjracd(int *model, double *pars, int *idx, double *hEst, double *x,
                  double *constm, double *condm, int *m, int *T, double *h, double *z,
                  double *tempskew, double *tempshape1,double *tempshape2, double *skhEst, double *tskew,
                  double *tshape1,double *tshape2, double *sbounds,
-                 double *llh, double *LHT, double *skew, double *kurt)
+                 double *llh, double *LHT, double *skewness, double *kurtosis)
 {
 
   int i;
   double lk=0;
-/*double hm = 0;*/
+  double hm = 0;
   // Handle the initial days with lagged. Start the recursion from day m+1 in which m is maximum order
   for(i=0; i<*m; i++)
   {
-    if(model[10]>0)
+    if(model[13]>0)
     {
       tempskew[i] = skhEst[0];
       tskew[i] = logmap1dT(sbounds[0], sbounds[1], tempskew[i]);
     } else{
-      tskew[i] = pars[idx[7]];
+      tskew[i] = pars[idx[11]];
     }
-    if(model[14]>0)
+    if(model[18]>0)
     {
       tempshape1[i] = skhEst[1];
       tshape1[i] = expmap1dT(sbounds[2], tempshape1[i], sbounds[6]);
       /* tshape1[i] = logmap1dT(sbounds[2], sbounds[3], tempshape1[i]); */
       } else{
-      tshape1[i] = pars[idx[8]];
+      tshape1[i] = pars[idx[12]];
     }
-    if(model[18]>0)
+    if(model[23]>0)
     {
       tempshape2[i] = skhEst[2];
       /*  tshape2[i] = expmap2dT(sbounds[4], sbounds[5],tempshape2[i], sbounds[6]);*/
       tshape2[i] = logmap1dT(sbounds[4], sbounds[5],tempshape2[i]);
     } else{
-      tshape2[i] = pars[idx[9]];
+      tshape2[i] = pars[idx[13]];
     }
     h[i] = *hEst;
-    armafilter(model, pars, idx, x, res, zrf, constm, condm, *m, i, *T);
+    skewness[i] = skew(tskew[i], tshape1[i],tshape2[i], model[34]);
+    skewness[i] = kurt(tskew[i], tshape1[i],tshape2[i], model[34]);
+    armafilter(model, pars, idx, x, res, zrf, constm, condm, fabs(*hEst), skewness[i], kurtosis[i], *m, i, *T);
     e[i] = res[i] * res[i];
     nres[i] = res[i] < 0.0 ? e[i] : 0.0;
     z[i] = res[i]/sqrt(fabs(h[i]));
-    LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[30]));
-    skew[i] = skewness(tskew[i], tshape1[i],tshape2[i], model[30]);
-    kurt[i] = kurtosis(tskew[i], tshape1[i],tshape2[i], model[30]);
+    LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[34]));
     lk = lk - LHT[i];
   }
   for (i=*m; i<*T; i++)
   {
     gjracdfilter(model, pars, idx, nres, e, *T, i, h);
     // After this step, we have h is a column vector of conditonal variance
-   /* hm = sqrt(fabs(h[i])); */
-    if(model[25]==1){
+   hm = sqrt(fabs(h[i]));
+    if(model[31]==1){
       skewfilter(model, pars, idx, z, tempskew, tskew, sbounds, h, i, *T);
     } else{
       skewfilter(model, pars, idx, res, tempskew, tskew, sbounds, h, i, *T);
     }
-    if(model[26]==1){
+    if(model[32]==1){
       acdshape1filter(model, pars, idx, z, tempshape1, tshape1, sbounds, h, i, *T);
     } else{
       acdshape1filter(model, pars, idx, res, tempshape1, tshape1, sbounds, h, i, *T);
     }
-    if(model[27]==1){
+    if(model[33]==1){
       acdshape2filter(model, pars, idx, z, tempshape2, tshape2, sbounds, h, i, *T);
     } else{
       acdshape2filter(model, pars, idx, res, tempshape2, tshape2, sbounds, h, i, *T);
     }
-    armafilter(model, pars, idx, x, res, zrf, constm, condm, *m, i, *T);
+    skewness[i] = skew(tskew[i], tshape1[i],tshape2[i], model[34]);
+    kurtosis[i] = kurt(tskew[i], tshape1[i],tshape2[i], model[34]);
+    armafilter(model, pars, idx, x, res, zrf, constm, condm, hm, skewness[i], kurtosis[i], *m, i, *T);
     e[i] = res[i] * res[i];
     nres[i] = (res[i] < 0.0) ? e[i] : 0.0;
     z[i] = res[i]/sqrt(fabs(h[i]));
-    LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[30]));
-    skew[i] = skewness(tskew[i], tshape1[i],tshape2[i], model[30]);
-    kurt[i] = kurtosis(tskew[i], tshape1[i],tshape2[i], model[30]);
+    LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[34]));
     lk = lk - LHT[i];
   }
   *llh=lk;
-
 }

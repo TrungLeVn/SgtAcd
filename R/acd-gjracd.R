@@ -25,7 +25,7 @@
   N = c(m, T)
   modelinc = model$modelinc
   hm = arglist$tmph
-  rx = .arfimaxfilteracd(modelinc, ipars[, 1], idx, data = data, N = N, arglist$garchenv)
+  rx = .arfimaxfilteracd(modelinc, ipars[, 1], idx, hm = hm, skm = 0, kum = 0, data = data, N = N, arglist$garchenv)
   # res is the residuals of mean process. zrf is the standardized residuals
   res = rx$res
   zrf = rx$zrf
@@ -71,8 +71,8 @@
   condm 	= double(length = T)
   llh 	= double(length = 1)
   LHT 	= double(length = T)
-  skew = double(length = T)
-  kurt = double(length = T)
+  skewness = double(length = T)
+  kurtosis = double(length = T)
   ans = try(.C("gjracd",
              model = as.integer(modelinc),
              pars = as.double(ipars[,1]),
@@ -99,8 +99,8 @@
              sbounds = as.double(sbounds),
              llh = double(1),
              LHT = double(T),
-             skew = double(T),
-             kurt = double(T),
+             skewness = double(T),
+             kurtosis = double(T),
              PACKAGE = "SgtAcd"), silent = TRUE )
   if( inherits(ans, "try-error") ){
     cat(paste("\nacdfit-->warning: ", ans,"\n", sep=""))
@@ -117,8 +117,8 @@
   tempskew = ans$tempskew
   tempshape1 = ans$tempshape1
   tempshape2 = ans$tempshape2
-  skew = ans$skew;
-  kurt = ans$kurt;
+  skewness = ans$skewness;
+  kurtosis = ans$kurtosis;
 
   if( is.finite(llh) && !is.na(llh) && !is.nan(llh) ){
     assign("racd_llh", llh, envir = arglist$garchenv)
@@ -133,7 +133,7 @@
                all = list(llh = llh, h = h, res = res, z = z, kappa = kappa,
                           tskew = tskew, tshape1 = tshape1, tempshape1 = tempshape1,
                           tshape2 = tshape2, tempshape2 = tempshape2,
-                          tempskew = tempskew, LHT = LHT, skewness = skew, kurtosis = kurt))
+                          tempskew = tempskew, LHT = LHT, skewness = skewness, kurtosis = kurtosis))
   return( ans )
 }
 #----------------

@@ -176,7 +176,7 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   par = par.LB = par.UB = numeric()
      # intercept
   #par[1] = logtransform(unconpar,shape2.LB,shape2.UB,inverse = TRUE)
-  par[1] = -5
+  par[1] = logtransform(unconpar,shape2.LB,shape2.UB,inverse = TRUE)
   par.LB[1] = logtransform(shape2.LB * 1.0001, shape2.LB, shape2.UB,inverse = TRUE)
   par.UB[1] = logtransform(shape2.UB * 0.999, shape2.LB, shape2.UB,inverse = TRUE)
   #par[1] = exptransform2(unconpar,shape2.LB,shape2.UB,inverse = TRUE)

@@ -25,13 +25,13 @@
   N = c(m, T)
   modelinc = model$modelinc
   hm = arglist$tmph
-  rx = .arfimaxfilteracd(modelinc, ipars[, 1], idx, data = data, N = N, arglist$garchenv)
+  rx = .arfimaxfilteracd(modelinc, ipars[, 1], idx, h = hm, skewness = 0, kurtosis = 0, data = data, N = N, arglist$garchenv)
   # res is the residuals of mean process. zrf is the standardized residuals
   res = rx$res
   zrf = rx$zrf
   res[is.na(res) | !is.finite(res) | is.nan(res)] = 0
   if( !is.null(arglist$n.old) ){
-    rx = .arfimaxfilteracd(modelinc, ipars[,1], idx, data = data[1:Nx], N = c(m, Nx), arglist$garchenv)
+    rx = .arfimaxfilteracd(modelinc, ipars[,1], idx,data = data[1:Nx], N = c(m, Nx), arglist$garchenv)
     res2 = rx$res
     res2[is.na(res2) | !is.finite(res2) | is.nan(res2)] = 0
     mvar = mean(res2*res2)
@@ -45,7 +45,7 @@
     ipars[idx["omega",1],1] = max(eps, ipars[idx["omega",1],1])
     hEst = mvar
   } else{
-     mv = 0
+    mv = 0
     persist = sum(ipars[idx["alpha",1]:idx["alpha",2],1])+sum(ipars[idx["beta",1]:idx["beta",2],1])
     ipars[idx["omega",1],1] = mvar * (1 - persist) - mv
     hEst = mvar
@@ -59,19 +59,20 @@
 
   sbounds = model$sbounds
   skhEst = arglist$skhEst
-
   tempskew  = double(length = T)
   tempshape1 = double(length = T)
   tempshape2 = double(length = T)
   tskew 	= double(length = T)
   tshape1 	= double(length = T)
-  tshape2 = double(length = T)
+  tshape2 	= double(length = T)
   h 		= double(length = T)
   z 		= double(length = T)
   constm 	= double(length = T)
   condm 	= double(length = T)
   llh 	= double(length = 1)
   LHT 	= double(length = T)
+  skewness = double(length = T)
+  kurtosis = double(length = T)
   ans = try(.C("sacdfilterC",
                model = as.integer(modelinc),
                pars = as.double(ipars[,1]),
@@ -97,6 +98,8 @@
                sbounds = as.double(sbounds),
                llh = double(1),
                LHT = double(T),
+               skewness = double(length=T),
+               kurtosis = double(length = T),
                PACKAGE = "SgtAcd"), silent = TRUE )
   if( inherits(ans, "try-error") ){
     cat(paste("\nacdfit-->warning: ", ans,"\n", sep=""))
@@ -113,20 +116,22 @@
   tempskew = ans$tempskew
   tempshape1 = ans$tempshape1
   tempshape2 = ans$tempshape2
-  LHT = -ans$LHT
+  skewness = ans$skewness;
+  kurtosis = ans$kurtosis;
+
   if( is.finite(llh) && !is.na(llh) && !is.nan(llh) ){
     assign("racd_llh", llh, envir = arglist$garchenv)
   } else {
     llh = (get("racd_llh", arglist$garchenv) + 0.1*(abs(get("racd_llh",arglist$garchenv))))
   }
   # LHT = raw scores
-# LHT = -ans$LHT
+  LHT = -ans$LHT
   ans = switch(arglist$returnType,
                llh = arglist$fnscale*llh,
                LHT = LHT,
                all = list(llh = llh, h = h, res = res, z = z, kappa = kappa,
                           tskew = tskew, tshape1 = tshape1, tempshape1 = tempshape1,
                           tshape2 = tshape2, tempshape2 = tempshape2,
-                          tempskew = tempskew, LHT = LHT))
+                          tempskew = tempskew, LHT = LHT, skewness = skewness, kurtosis = kurtosis))
   return( ans )
 }

@@ -284,7 +284,7 @@ double qdist(const double prob,const double mu, const double sigma, const double
 /*
  * Higher moment calculation
  */
-double skewness(const double sk, const double ku1, const double ku2, const int ndis)
+double skew(const double sk, const double ku1, const double ku2, const int ndis)
 {
   double sigma;
   double lambda = sk;
@@ -321,7 +321,7 @@ double skewness(const double sk, const double ku1, const double ku2, const int n
   return(ans);
 }
 
-double kurtosis(const double sk, const double ku1, const double ku2, const int ndis)
+double kurt(const double sk, const double ku1, const double ku2, const int ndis)
 {
   double sigma;
   double lambda = sk;

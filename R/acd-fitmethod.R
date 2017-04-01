@@ -22,10 +22,25 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
                   skew0 = NULL, shape10 = NULL,shape20 = NULL, cl = NULL, ...) {
   UseMethod("acdfit")
 }
-.arfimaxfilteracd = function(modelinc, pars, idx, data, N, garchenv) {
+.arfimaxfilteracd = function(modelinc, pars, idx,hm, skm, kum, data, N, garchenv) {
   # if(model[1] == 0) pars[1,1] = 0
   m = as.integer(N[1])
   T = as.integer(N[2])
+  if(length(hm) <= 1) {
+    hm = double(length = T)
+  } else{
+    hm = as.double(hm)
+  }
+  if(length(skm)<=1){
+    skm = double(T)
+  } else{
+    skm = as.double(skm)
+  }
+  if(length(kum)<=1){
+    kum = double(T)
+  } else{
+    kum = as.double(kum)
+  }
   data = as.double(data)
   res = double(length = T)
   # this routine is used for the mean residuals to initiate the recursion so we ignore arfima before
@@ -36,8 +51,9 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   #condstm is the mu value, if we use arma, adjusted for external regressor if neccessary
   # condm is conditoinal mean, w.r.t mu, ar1, ma1 value
   # res is ret - condm
-  if (modelinc[2] > 0 | modelinc[3] > 0) {
-    ans = try(.C("armafilterC", model = as.integer(modelinc), pars = as.double(pars), idx = as.integer(idx - 1), x = data, res = res,
+  if (sum(modelinc[2:6])>0) {
+    ans = try(.C("armafilterC", model = as.integer(modelinc), pars = as.double(pars), idx = as.integer(idx - 1),hm = hm, skm = skm,
+                 kum = kum, x = data, res = res,
                  zrf = zrf, constm = constm, condm = condm,  m = m, T = T, PACKAGE = "SgtAcd"), silent = TRUE)
     if (inherits(ans, "try-error")) {
       assign(".csol", 1, envir = garchenv)
@@ -82,7 +98,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
 #' @export acdfit
 #' @useDynLib SgtAcd
 #------------------------------------
-.acdfit = function(spec, data, solver = "ucminf", out.sample = 0, solver.control = list(),
+.acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts = 3),
                          fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 2000,rseed = NULL),
                          skew0 = NULL, shape10 = NULL,shape20 = NULL, cl = NULL, ...) {
   tic = Sys.time()
@@ -172,7 +188,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   #-------------------
   # Optimization Starting Parameters Vector & Bounds
   #--------------------s
-  tmp = acdstart(ipars, arglist)
+  tmp = .acdstart(ipars, arglist)
   arglist = tmp$arglist
   ipars = arglist$ipars = tmp$pars
   arglist$model = model
