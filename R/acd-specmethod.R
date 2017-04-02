@@ -12,7 +12,7 @@
 #'         sGARCH and gjrGARCH. Do not support external regessor.
 #' @param mean.model Specification of mean process. Only support maximum ARMA(1,1)
 #' @param distribution.model Specification of skew/shape distribution's
-#'            parameter dynamids. Only support "sgt", "sged" and "nig"
+#'            parameter dynamids. Only support "sgt", "sged" and "sst"
 #'         as conditional distribution.
 #' @param start.pars List of starting values for specific parameters using in optimization routines
 #' @param fixed.pars List of parameters that we want to fixed, i.e, drop out of optimization routines
