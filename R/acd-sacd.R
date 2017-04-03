@@ -72,7 +72,7 @@
   condm 	= double(length = T)
   llh 	= double(length = 1)
   LHT 	= double(length = T)
-  ans = try(.C("sacdfilterC",
+  ans = try(.C("sacd",
                model = as.integer(modelinc),
                pars = as.double(ipars[,1]),
                idx = as.integer(idx[,1]-1),
