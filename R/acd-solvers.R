@@ -38,16 +38,16 @@
 for(i in 1:length(pars)){
   dopt[[i]] = truncate_fun(pars[i])
 }
-		if(sum(arglist$model$vmodel$garchOrder)==0){
-		  pars = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(1, length(pars)), distr.opt = NULL,
-		                           LB = LB, UB = UB, bestN = N, n.sim = arglist$fit.control$n.sim,
-		                           cluster = cluster, arglist = arglist, trace = TRUE)
-		} else{
+		#if(sum(arglist$model$vmodel$garchOrder)==0){
+	##	  pars = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(1, length(pars)), distr.opt = NULL,
+	#	                           LB = LB, UB = UB, bestN = N, n.sim = arglist$fit.control$n.sim,
+	#	                           cluster = cluster, arglist = arglist, trace = TRUE, rseed = rseed)
+	#	} else{
 		  pars = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(2, length(pars)), distr.opt = dopt,
 		                           ineqfun = ifun, ineqLB = 1e-12, ineqUB = 0.99,
 		                           LB = LB, UB = UB, bestN = N, n.sim = arglist$fit.control$n.sim,
 		                           cluster = cluster, arglist = arglist, trace = TRUE,rseed = rseed)
-		}
+		#}
 		pars = pars[,-NCOL(pars), drop=FALSE]
 		colnames(pars) = nm
 	} else{
