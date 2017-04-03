@@ -82,8 +82,8 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
 #' @export acdfit
 #' @useDynLib SgtAcd
 #------------------------------------
-.acdfit = function(spec, data, solver = "ucminf", out.sample = 0, solver.control = list(),
-                         fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 2000,rseed = NULL),
+.acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts =3),
+                         fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 3000,rseed = NULL),
                          skew0 = NULL, shape10 = NULL,shape20 = NULL, cl = NULL, ...) {
   tic = Sys.time()
   vmodel = spec@model$vmodel$model
@@ -218,8 +218,8 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     names(parscale) = rownames(ipars[estidx, ])
     if (modelinc[1] > 0)
       parscale["mu"] = abs(mean(zdata))
-    if (modelinc[9] > 0)
-      parscale["omega"] = var(zdata)
+    #if (modelinc[4] > 0)
+     # parscale["omega"] = var(zdata)
     arglist$returnType = "llh"
     #arglist$returnType = "all"
     solution = .acdsolver(solver, pars = ipars[estidx, 1], fun = fun, Ifn = NULL, ILB = NULL, IUB = NULL, gr = NULL, hessian = NULL, parscale = parscale,
