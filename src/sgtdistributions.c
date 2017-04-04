@@ -184,13 +184,17 @@ double dsgtB(const double value,const double sk,const double ku1,const double ku
   double lambda = sk;
   double kappa = ku1;
   double nu = ku2;
-  double g,rho,theta,C,sig,ans;
-  g = (1 + pow(lambda,2.0)) * (1.0/beta(nu/kappa,1.0/kappa)) * pow((nu+1.0)/kappa,2.0/kappa) * beta((nu-2.0)/kappa,3.0/kappa);
-  rho = 2.0*lambda*(1.0/beta(nu/kappa,1.0/kappa))*pow((nu+1.0)/kappa,1.0/kappa)*beta((nu-1.0)/kappa,2.0/kappa);
-  theta = 1.0/sqrt(g-pow(rho,2.0));
-  sig = rho*theta;
-  C = 0.5*kappa*pow((nu+1)/kappa,(-1.0/kappa))*(1/beta(nu/kappa,1/kappa))*(1/theta);
-  ans = C*pow((1+(pow(fabs(x+sig),kappa))/(((nu+1)/kappa)*pow((1+sgn(x+sig)*lambda),kappa)*pow(theta,kappa))),(-1*(nu+1)/kappa));
+  double g,rho,theta,C,sig,ans,beta1,beta2,beta3,C1;
+  beta1 = beta(nu/kappa,1.0/kappa);
+  beta2 = beta((nu-1.0)/kappa,2.0/kappa);
+  beta3 = beta((nu-2.0)/kappa,3.0/kappa);
+  g = (1.0 + 3.0*pow(lambda,2.0)) * pow(beta1,(-1.0)) * pow((nu+1.0)/kappa,2.0/kappa) * beta3;
+  rho = 2.0 * lambda * pow(beta1,(-1.0)) * pow((nu+1.0)/kappa,1.0/kappa) * beta2;
+  theta = 1.0/(sqrt(g - pow(rho,2)));
+  sig = rho * theta;
+  C = 0.5 * kappa * pow((nu+1.0)/kappa,(-1.0/kappa)) * pow(beta1,(-1.0)) * pow(theta,(-1.0));
+  C1 = 1.0 + (pow(fabs(x + sig),kappa))/(((nu+1.0)/kappa) * pow((1 + sgn(x + sig) * lambda),kappa) * pow(theta,kappa));
+  ans = C*pow(C1,-1.0 * (nu + 1.0)/kappa);
   return(ans);
 }
 
