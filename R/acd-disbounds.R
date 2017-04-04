@@ -161,9 +161,9 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   #par.LB[1] = logtransform(shape1.LB * 1.0001, shape1.LB, shape1.UB,inverse = TRUE)
   #par.UB[1] = logtransform(shape1.UB * 0.999, shape1.LB, shape1.UB,inverse = TRUE)
   # alpha1 and alpha2 with lower/upper bounds
-  par = c(par,0.1,0.1,0.5)
-  #par.LB = c(par.LB, -1, -1,-0.90+.eps)
+  par = c(par,0,0,0.5)
   par.LB = c(par.LB, -1, -1,0+.eps)
+  #par.LB = c(par.LB, -1, -1,0+.eps)
   par.UB = c(par.UB,1,1,0.9-.eps)
   return(list(shapepars = par, shapepar.LB = par.LB, shapepar.UB = par.UB, sh0 = par[1]))
 }
@@ -173,8 +173,8 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   shape2.UB = dbounds[2]
   par = par.LB = par.UB = numeric()
      # intercept
-  #par[1] = logtransform(unconpar,shape2.LB,shape2.UB,inverse = TRUE)
-  par[1] = -5
+  par[1] = logtransform(unconpar,shape2.LB,shape2.UB,inverse = TRUE)
+  #par[1] = -5
   par.LB[1] = logtransform(shape2.LB * 1.001, shape2.LB, shape2.UB,inverse = TRUE)
   par.UB[1] = logtransform(shape2.UB * 0.99, shape2.LB, shape2.UB,inverse = TRUE)
   #par[1] = exptransform2(unconpar,shape2.LB,shape2.UB,inverse = TRUE)
@@ -182,8 +182,8 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   #par.UB[2] = exptransform2(shape2.UB * 0.999,shape2.LB,shape2.UB,inverse = TRUE)
     # alpha1 and alpha2 with lower/upper bounds
     par = c(par,0,0,0)
-    #par.LB = c(par.LB, -2, -2,-0.90+.eps)
-    par.LB = c(par.LB, -2, -2,0+.eps)
+    par.LB = c(par.LB, -2, -2,-0.9+.eps)
+    #par.LB = c(par.LB, -2, -2,0+.eps)
     par.UB = c(par.UB,2,2,0.9-.eps)
   return(list(shapepars = par, shapepar.LB = par.LB, shapepar.UB = par.UB, sh0 = par[1]))
 }
