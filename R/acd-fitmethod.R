@@ -82,7 +82,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
 #' @export acdfit
 #' @useDynLib SgtAcd
 #------------------------------------
-.acdfit = function(spec, data, solver = "ucminf", out.sample = 0, solver.control = list(),
+.acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts = 3),
                          fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 2000,rseed = NULL),
                          skew0 = NULL, shape10 = NULL,shape20 = NULL, cl = NULL, ...) {
   tic = Sys.time()
