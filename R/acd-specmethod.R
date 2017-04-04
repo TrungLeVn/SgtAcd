@@ -22,9 +22,9 @@
 
 acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
                    mean.model = list(armaOrder = c(0,0), include.mean = TRUE),
-                   distribution.model = list(model = "sgt", skewOrder = c(1,1, 1),skewshock = 1, skewshocktype = 1, skewmodel = "pwl",
-                                             shape1Order = c(1, 1, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "pwl",
-                                             shape2Order = c(1, 1, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "pwl",exp.rate = 1),
+                   distribution.model = list(model = "sgt", skewOrder = c(1, 0, 1),skewshock = 1, skewshocktype = 1, skewmodel = "quad",
+                                             shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad",
+                                             shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad",exp.rate = 1),
                    start.pars = list(), fixed.pars = list()) {
   UseMethod("acdspec") #acdspec here is the name of the generic function acdspec, that will be used to create an object of ACDspec class
 }
@@ -43,11 +43,11 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   return(modelnames)
 }
 
-.acdspec <- function(variance.model = list(model = "sGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
+.acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
                     mean.model = list(armaOrder = c(0,0), include.mean = TRUE),
-                    distribution.model = list(model = "sged", skewOrder = c(1,1, 1),skewshock = 1, skewshocktype = 1, skewmodel = "pwl",
-                                              shape1Order = c(1, 1, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "pwl",
-                                              shape2Order = c(1, 1, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "pwl",exp.rate = 1),
+                    distribution.model = list(model = "sgt", skewOrder = c(1, 0, 1),skewshock = 1, skewshocktype = 1, skewmodel = "quad",
+                                              shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad",
+                                              shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad",exp.rate = 1),
                     start.pars = list(), fixed.pars = list()) {
   # specify the parameter list
   modelinc = rep(0, 31)
@@ -94,7 +94,7 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   #------
   # Specify the variance equation. The undefined argument will goes with  default
   #-----
-  vmodel = list(model = "sGARCH", garchOrder = c(1, 1), variance.targeting = FALSE)
+  vmodel = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE)
   idx = na.omit(match(names(variance.model), names(vmodel)))
 
   if (length(idx) > 0)
@@ -104,7 +104,7 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
     stop("\nacdpec-->error: the garch model does not appear to be a valid choice.\n", call. = FALSE)
   modelinc[5] = vmodel$garchOrder[1]
   modelinc[6] = vmodel$garchOrder[2]
-  if (vmodel$model == "gjrGARCH" &&modelinc[5]!=0) {
+  if (vmodel$model == "gjrGARCH") {
     modelinc[7] = 1
   }
   if (is.null(vmodel$variance.targeting))
@@ -124,9 +124,9 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   #--------
   # Specify the higher moment equations. The undefined argument will goes with default
   #-------
-  dmodel = list(model = "sgt", skewOrder = c(1, 1, 1), skewshock = 1, skewshocktype = 1, skewmodel = "pwl",
-                shape1Order = c(1 ,1, 1), shape1shock = 1, shape1shocktype = 1, shape1model = "pwl",
-                shape2Order = c(1 ,1, 1), shape2shock = 1, shape2shocktype = 1, shape2model = "pwl",exp.rate = 1)
+  dmodel = list(model = "sgt", skewOrder = c(1, 0, 1), skewshock = 1, skewshocktype = 1, skewmodel = "quad",
+                shape1Order = c(1 ,0, 1), shape1shock = 1, shape1shocktype = 1, shape1model = "quad",
+                shape2Order = c(1 ,0, 1), shape2shock = 1, shape2shocktype = 1, shape2model = "quad",exp.rate = 1)
   idx = na.omit(match(names(distribution.model), names(dmodel)))
   if (length(idx) > 0)
     for (i in 1:length(idx)) {
@@ -184,7 +184,6 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   #------
   # Set the distribution bounds and specify the parameters to be estimated (which will have value 1 in modelinc)
   #-----
-  # because we exlucde the normal, we add 1 to the value (for c code)
   modeldesc$distno = which(dmodel$model == valid.distribution)
   # 1 is sgt; 2 is sged; 3 is sst
   di = .DistributionBounds(dmodel$model)
