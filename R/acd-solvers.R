@@ -43,7 +43,7 @@ for(i in 1:length(pars)){
 	#	                           LB = LB, UB = UB, bestN = N, n.sim = arglist$fit.control$n.sim,
 	#	                           cluster = cluster, arglist = arglist, trace = TRUE, rseed = rseed)
 	#	} else{
-		  pars = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(3, length(pars)), distr.opt = dopt,
+		  pars = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(2, length(pars)), distr.opt = dopt,
 		                           ineqfun = ifun, ineqLB = 1e-12, ineqUB = 0.99,
 		                           LB = LB, UB = UB, bestN = N, n.sim = arglist$fit.control$n.sim,
 		                           cluster = cluster, arglist = arglist, trace = TRUE,rseed = rseed)
