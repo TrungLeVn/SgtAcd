@@ -26,7 +26,8 @@ double dsged(const double value, const double mean, const double sig, const doub
   double kappa = ku;
   double ans;
 
-  sigma = sigma/sqrt((PI*(1.0+3.0*pow(lambda,2.0))*gammafn(3.0/kappa)- pow(16,1.0/kappa)*pow(lambda,2)*pow(gammafn(0.5+(1.0/kappa)),2)*gammafn(1.0/kappa))/(PI*gammafn(1.0/kappa)));
+  sigma = sigma/sqrt((PI*(1.0+3.0*pow(lambda,2.0))*gammafn(3.0/kappa)- pow(16,1.0/kappa)
+                        *pow(lambda,2)*pow(gammafn(0.5+(1.0/kappa)),2)*gammafn(1.0/kappa))/(PI*gammafn(1.0/kappa)));
 
   x = x + (pow(2.0,2.0/kappa)*sigma*lambda*gammafn(0.5+(1.0/kappa)))/sqrt(PI);
 
@@ -168,7 +169,7 @@ double rsgt(const double mean,const double sig,const double sk,const double ku1,
   double sigma = sig;
   double lambda = sk;
   double kappa = ku1;
-  double nu = Rku2/ku1;
+  double nu = Rku2;
   double z,ans;
   z = runif(0.0,1.0);
   Rprintf("value of z is %f\n",z);
