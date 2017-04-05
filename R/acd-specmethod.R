@@ -22,9 +22,9 @@
 
 acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
                    mean.model = list(armaOrder = c(0,0), include.mean = TRUE),
-                   distribution.model = list(model = "sgt", skewOrder = c(1,1, 1),skewshock = 1, skewshocktype = 1, skewmodel = "pwl",
-                                             shape1Order = c(1, 1, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "pwl",
-                                             shape2Order = c(1, 1, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "pwl",exp.rate = 1),
+                   distribution.model = list(model = "sgt", skewOrder = c(1,0, 1),skewshock = 1, skewshocktype = 1, skewmodel = "quad",
+                                             shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad",
+                                             shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad",exp.rate = 1),
                    start.pars = list(), fixed.pars = list()) {
   UseMethod("acdspec") #acdspec here is the name of the generic function acdspec, that will be used to create an object of ACDspec class
 }
@@ -43,11 +43,11 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   return(modelnames)
 }
 
-.acdspec <- function(variance.model = list(model = "sGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
+.acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
                     mean.model = list(armaOrder = c(0,0), include.mean = TRUE),
-                    distribution.model = list(model = "sged", skewOrder = c(1,1, 1),skewshock = 1, skewshocktype = 1, skewmodel = "pwl",
-                                              shape1Order = c(1, 1, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "pwl",
-                                              shape2Order = c(1, 1, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "pwl",exp.rate = 1),
+                    distribution.model = list(model = "sgt", skewOrder = c(1,0, 1),skewshock = 1, skewshocktype = 1, skewmodel = "quad",
+                                              shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad",
+                                              shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad",exp.rate = 1),
                     start.pars = list(), fixed.pars = list()) {
   # specify the parameter list
   modelinc = rep(0, 31)
