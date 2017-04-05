@@ -94,14 +94,14 @@ double rsged(const double mean,const double sig, const double sk, const double k
 * Skewed Student-t distribution
 */
 
-double dsgt(const double value,const double mean,const double sig,const double sk,const double ku1,const double ku2)
+double dsgt(const double value,const double mean,const double sig,const double sk,const double ku1,const double Rku2)
 {
   double x = value;
   double mu = mean;
   double sigma = sig;
   double lambda = sk;
   double kappa = ku1;
-  double nu = ku2;
+  double nu = Rku2/ku1;
   double ans;
 /* sigma here is the v*sigma in the sgt R documents */
   sigma = sigma/(pow(nu,(1/kappa)) * sqrt((3.0 * pow(lambda,2.0) + 1.0) * (beta(3.0/kappa,
@@ -111,14 +111,14 @@ double dsgt(const double value,const double mean,const double sig,const double s
   ans =  kappa/(2 * sigma * pow(nu,(1.0/kappa)) * beta(1.0/kappa, nu) * pow((1.0 + pow(fabs(x - mu),kappa)/(nu * pow(sigma,kappa)* pow((1.0 + lambda * sgn(x - mu)),kappa))),(nu + 1/kappa)));
   return(ans);
 }
-double qsgt(const double value,const double mean,const double sig,const double sk,const double ku1,const double ku2)
+double qsgt(const double value,const double mean,const double sig,const double sk,const double ku1,const double Rku2)
 {
   double prob = value;
   double mu = mean;
   double sigma = sig;
   double lambda = sk;
   double kappa = ku1;
-  double nu = ku2;
+  double nu = Rku2/ku1;
   double ans;
   sigma = sigma/(pow(nu,(1/kappa)) * sqrt((3.0 * pow(lambda,2.0) + 1.0) * (beta(3.0/kappa,
                                           nu - 2.0/kappa)/beta(1.0/kappa, nu)) - 4.0 * pow(lambda,2.0) * pow((beta(2.0/kappa,
@@ -136,14 +136,14 @@ double qsgt(const double value,const double mean,const double sig,const double s
   ans = out - (2.0 * sigma * lambda * pow(nu,(1.0/kappa)) * beta(2.0/kappa,nu - 1.0/kappa))/beta(1.0/kappa, nu);
   return(ans);
 }
-double psgt(const double value,const double mean,const double sig,const double sk,const double ku1,const double ku2)
+double psgt(const double value,const double mean,const double sig,const double sk,const double ku1,const double Rku2)
 {
   double x = value;
   double mu = mean;
   double sigma = sig;
   double lambda = sk;
   double kappa = ku1;
-  double nu = ku2;
+  double nu = Rku2/ku1;
   double ans;
   sigma = sigma/(pow(nu,(1/kappa)) * sqrt((3.0 * pow(lambda,2.0) + 1.0) * (beta(3.0/kappa,
                                           nu - 2.0/kappa)/beta(1.0/kappa, nu)) - 4.0 * pow(lambda,2.0) * pow((beta(2.0/kappa,
@@ -162,13 +162,13 @@ double psgt(const double value,const double mean,const double sig,const double s
   }
   return(ans);
 }
-double rsgt(const double mean,const double sig,const double sk,const double ku1,const double ku2)
+double rsgt(const double mean,const double sig,const double sk,const double ku1,const double Rku2)
 {
   double mu = mean;
   double sigma = sig;
   double lambda = sk;
   double kappa = ku1;
-  double nu = ku2;
+  double nu = Rku2/ku1;
   double z,ans;
   z = runif(0.0,1.0);
   Rprintf("value of z is %f\n",z);
@@ -177,7 +177,7 @@ double rsgt(const double mean,const double sig,const double sk,const double ku1,
 }
 /*
  * SGT - Bali et al 2008
- */
+
 double dsgtB(const double value,const double sk,const double ku1,const double ku2)
 {
   double x = value;
@@ -197,7 +197,7 @@ double dsgtB(const double value,const double sk,const double ku1,const double ku
   ans = C*pow(C1,-1.0 * (nu + 1.0)/kappa);
   return(ans);
 }
-
+*/
 /*
  * wrapper function
  */
@@ -209,7 +209,7 @@ double ddist(const double zz, const double hh, const double sk, const double ku1
   double pdf=0;
   if(ndis==1)
   {
-    pdf=dsgtB(zz,sk, ku1 ,ku2)/hh;
+    pdf=dsgt(zz,0,1,sk, ku1 ,ku2)/hh;
   }
   if(ndis==2)
   {
