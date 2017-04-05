@@ -13,7 +13,7 @@ double ddist(const double ,const double , const double , const double , const do
 double rdist(const double , const double , const double , const int );
 double pdist(const double , const double , const double , const double , const double , const double , const int );
 double qdist(const double ,const double , const double , const double , const double , const double , const int );
-double dsgtB(const double,const double,const double,const double);
+double Mr(const int, const double , const double , const double , const double);
 double skewness(const double, const double, const double, const int);
 double kurtosis(const double, const double, const double, const int);
 #endif /* DISTRIBUTIONS_H */

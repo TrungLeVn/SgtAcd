@@ -289,79 +289,105 @@ double qdist(const double prob,const double mu, const double sigma, const double
 /*
  * Higher moment calculation
  */
+double Mr(const int r, const double theta, const double lambda, const double kappa, const double nu)
+{
+  double ans = 0.0;
+  ans = 0.5 * (pow((1.0 + lambda),(r+1)) + pow(-1.0,r) * pow((1.0- lambda),(r+1)))*
+    pow((nu+1.0)/kappa,r/kappa)*
+    1/beta(nu/kappa,1.0/kappa)*
+    beta((nu-r)/kappa,(r+1)/kappa)*
+    pow(theta,r);
+  return(ans);
+}
 double skewness(const double sk, const double ku1, const double ku2, const int ndis)
 {
-  double sigma;
   double lambda = sk;
   double kappa = ku1;
   double nu = ku2;
   double ans = 0.0;
-
   if(ndis ==1){
-    sigma = 1.0/(pow(nu,(1/kappa)) * sqrt((3.0 * pow(lambda,2.0) + 1.0) * (beta(3.0/kappa,
-                                            nu - 2.0/kappa)/beta(1.0/kappa, nu)) - 4.0 * pow(lambda,2.0) * pow((beta(2.0/kappa,
-                                                                 nu - 1.0/kappa)/beta(1.0/kappa, nu)),2.0)));
-    ans = (2.0 * pow(nu,3.0/kappa) * lambda * pow(sigma,3.0))/(pow(beta(1.0/kappa,nu),3.0))
-      * (8.0 * pow(lambda,2.0) * pow(beta(2.0/kappa,nu - 1.0/kappa),3.0) - 3.0*(1.0+3.0*pow(lambda,2.0))*beta(1.0/kappa,nu)*beta(2.0/kappa,nu - 1.0/kappa)*beta(3.0/kappa,nu - 2.0/kappa)
-           + 2.0*(1.0+pow(lambda,2.0))*pow(beta(1/kappa,nu),2.0)*beta(4.0/kappa,nu - 3.0/kappa));
+    double beta1, beta2, beta3, nuAdj, g, rho, theta, delta, M3;
+    beta1 = beta(1.0/kappa,nu/kappa);
+    beta2 = beta(2.0/kappa,(nu-1.0)/kappa);
+    beta3 = beta(3.0/kappa,(nu-2.0)/kappa);
+    nuAdj = (nu+1.0)/kappa;
+    g = (1.0 + 3.0*pow(lambda,2.0)) * 1.0/beta1 * pow(nuAdj,2.0/kappa) * beta3;
+    rho = 2.0 * lambda * 1.0/beta1 * pow(nuAdj,1.0/kappa) * beta2;
+    theta = 1.0/sqrt(g - pow(rho,2.0));
+    delta = rho * theta;
+    M3 = Mr(3,theta,lambda,kappa,nu);
+    ans = M3 - 3.0*delta - pow(delta,3.0);
   }
   if(ndis == 2){
-
-   sigma = 1.0/sqrt((PI*(1.0+3.0*pow(lambda,2.0))*gammafn(3.0/kappa)- pow(16,1.0/kappa)*pow(lambda,2)*pow(gammafn(0.5+(1.0/kappa)),2)*gammafn(1.0/kappa))/(PI*gammafn(1.0/kappa)));
-
-    ans = ((lambda*pow(sigma,3.0))/(pow(PI,1.5)*gammafn(1.0/kappa)))
-      * (pow(2.0,(6.0+kappa)/kappa)*pow(lambda,2.0)*pow(gammafn(0.5 + 1.0/kappa),3.0)*gammafn(1.0/kappa)
-           - 3.0 * pow(4.0,1/kappa) * PI * (1.0 + 3.0*pow(lambda,2.0)) * gammafn(0.5 + 1.0/kappa) * gammafn(3.0/kappa)
-           + 4.0 * pow(PI,1.5) * (1.0 + pow(lambda,2.0)) * gammafn(4.0/kappa));
+  double C, theta, S, m, A, A3;
+  A = gammafn(2.0/kappa)/sqrt(gammafn(1.0/kappa) * gammafn(3.0/kappa));
+  S = sqrt(1.0 + 3.0*pow(lambda,2) - 4.0 * pow(A,2) * pow(lambda,2));
+  theta = sqrt(gammafn(1.0/kappa)/gammafn(3.0/kappa)) * 1.0/S;
+  m = 2.0 * lambda * (A/S);
+  A3 = 4 * lambda * (1 + pow(lambda,2)) * gammafn(4.0/kappa)* (1/gammafn(1.0/kappa)) * pow(theta,3);
+  ans = A3 - 3.0*m - pow(m,3);
   }
   if(ndis == 3){
+    double beta1, beta2, beta3, nuAdj, g, rho, theta, delta, M3;
     kappa = 2.0;
-    sigma = 1.0/(pow(nu,(1/kappa)) * sqrt((3.0 * pow(lambda,2.0) + 1.0) * (beta(3.0/kappa,
-                                            nu - 2.0/kappa)/beta(1.0/kappa, nu)) - 4.0 * pow(lambda,2.0) * pow((beta(2.0/kappa,
-                                                                 nu - 1.0/kappa)/beta(1.0/kappa, nu)),2)));
-    ans = (2.0 * pow(nu,3.0/kappa) * lambda * pow(sigma,3.0))/(pow(beta(1.0/kappa,nu),3.0))
-      * (8.0 * pow(lambda,2.0) * pow(beta(2.0/kappa,nu - 1.0/kappa),3.0) - 3.0*(1.0+3.0*pow(lambda,2.0))*beta(1.0/kappa,nu)*beta(2.0/kappa,nu - 1.0/kappa)*beta(3.0/kappa,nu - 2.0/kappa)
-           + 2.0*(1.0+pow(lambda,2.0))*pow(beta(1/kappa,nu),2)*beta(4.0/kappa,nu - 3.0/kappa));
+    beta1 = beta(1.0/kappa,nu/kappa);
+    beta2 = beta(2.0/kappa,(nu-1)/kappa);
+    beta3 = beta(3.0/kappa,(nu-2)/kappa);
+    nuAdj = (nu+1.0)/kappa;
+    g = (1.0 + 3.0*pow(lambda,2.0)) * 1.0/beta1 * pow(nuAdj,(2.0/kappa)) * beta3;
+    rho = 2.0 * lambda * 1.0/beta1 * pow(nuAdj,(1.0/kappa)) * beta2;
+    theta = 1.0/sqrt(g - pow(rho,2));
+    delta = rho * theta;
+    M3 = Mr(3,theta,lambda,kappa,nu);
+    ans = M3 - 3*delta - pow(delta,3);
   }
   return(ans);
 }
 
 double kurtosis(const double sk, const double ku1, const double ku2, const int ndis)
 {
-  double sigma;
   double lambda = sk;
   double kappa = ku1;
   double nu = ku2;
   double ans = 0.0;
-
   if(ndis ==1){
-    sigma = 1.0/(pow(nu,(1/kappa)) * sqrt((3.0 * pow(lambda,2.0) + 1.0) * (beta(3.0/kappa,
-                                            nu - 2.0/kappa)/beta(1.0/kappa, nu)) - 4.0 * pow(lambda,2.0) * pow((beta(2.0/kappa,
-                                                                 nu - 1.0/kappa)/beta(1.0/kappa, nu)),2)));
-    ans = (pow(nu,4.0/kappa) * pow(sigma,4.0))/(pow(beta(1.0/kappa,nu),4.0))
-      *(-48.0 * pow(lambda,4.0) * pow(beta(2.0/kappa, nu - 1.0/kappa),4)
-          + 24.0 * pow(lambda,2) *(1.0 + 3.0 * pow(lambda,2)) * beta(1/kappa,nu) * pow(beta(2.0/kappa, nu - 1.0/kappa),2) * beta(3.0/kappa,nu - 2.0/kappa)
-          -32.0 * pow(lambda,2) * (1.0 + pow(lambda,2)) * pow(beta(1.0/kappa,nu),2.0) * beta(2.0/kappa, nu - 1.0/kappa) * beta(4.0/kappa,nu - 3.0/kappa)
-          +(1 + 10*pow(lambda,2)+5.0*pow(lambda,4))*pow(beta(1.0/kappa,nu),3.0)*beta(5.0/kappa,nu - 4.0/kappa));
+    double beta1, beta2, beta3, nuAdj, g, rho, theta, delta, M3, M4;
+    beta1 = beta(1.0/kappa,nu/kappa);
+    beta2 = beta(2.0/kappa,(nu-1)/kappa);
+    beta3 = beta(3.0/kappa,(nu-2)/kappa);
+    nuAdj = (nu+1.0)/kappa;
+    g = (1.0 + 3.0*pow(lambda,2.0)) * 1.0/beta1 * pow(nuAdj,(2.0/kappa)) * beta3;
+    rho = 2.0 * lambda * 1.0/beta1 * pow(nuAdj,(1.0/kappa)) * beta2;
+    theta = 1.0/sqrt(g - pow(rho,2));
+    delta = rho * theta;
+    M3 = Mr(3,theta,lambda,kappa,nu);
+    M4 = Mr(4,theta,lambda,kappa,nu);
+    ans = M4 - 4*M3*delta +6*pow(delta,2) + 3*pow(delta,4);
   }
   if(ndis == 2){
-    sigma = 1.0/sqrt((PI*(1.0+3.0*pow(lambda,2.0))*gammafn(3.0/kappa)- pow(16,1.0/kappa)*pow(lambda,2)*pow(gammafn(0.5+(1.0/kappa)),2)*gammafn(1.0/kappa))/(PI*gammafn(1.0/kappa)));
-    ans = (pow(sigma,4.0))/(pow(PI,2.0) * gammafn(1.0/kappa))
-      *(-3.0 * pow(256.0,1.0/kappa) * pow(lambda,4.0) * pow(gammafn(0.5 + 1.0/kappa),4.0) * gammafn(1.0/kappa)
-          + 3.0 * pow(2.0,(4.0 + kappa)/kappa) * PI * pow(lambda,2.0) * (1.0 + 3.0 * pow(lambda,2.0)) * pow(gammafn(0.5 + 1.0/kappa),2.0) * gammafn(3.0/kappa)
-          - pow(2.0, 4.0 + 2.0/kappa) * pow(PI,1.5) * pow(lambda,2.0) * (1.0 + pow(lambda,2.0)) * gammafn(0.5 + 1.0/kappa) * gammafn(4.0/kappa)
-          + pow(PI,2.0) * (1.0 + 10.0*pow(lambda,2.0) + 5.0 * pow(lambda,4.0)) * gammafn(5.0/kappa));
+    double C, theta, S, m, A, A3, A4;
+    A = gammafn(2.0/kappa)/sqrt(gammafn(1.0/kappa) * gammafn(3.0/kappa));
+    S = sqrt(1.0 + 3.0*pow(lambda,2.0) - 4.0 * pow(A,2) * pow(lambda,2));
+    theta = sqrt(gammafn(1.0/kappa)/gammafn(3.0/kappa)) * 1.0/S;
+    m = 2.0 * lambda * (A/S);
+    A3 = 4.0 * lambda * (1.0 + pow(lambda,2.0)) * gammafn(4.0/kappa)* (1.0/gammafn(1.0/kappa)) * pow(theta,3.0);
+    A4 = (1.0 + 10.0 * pow(lambda,2.0) + 5.0* pow(lambda,4.0)) * gammafn(5.0/kappa) * (1/gammafn(1.0/kappa)) * pow(theta,4.0);
+    ans = A4 - 4.0*A3*m + 6.0*pow(m,2.0) + 3.0*pow(m,4.0);
   }
   if(ndis == 3){
     kappa = 2.0;
-    sigma = 1.0/(pow(nu,(1/kappa)) * sqrt((3.0 * pow(lambda,2.0) + 1.0) * (beta(3.0/kappa,
-                                            nu - 2.0/kappa)/beta(1.0/kappa, nu)) - 4.0 * pow(lambda,2.0) * pow((beta(2.0/kappa,
-                                                                 nu - 1.0/kappa)/beta(1.0/kappa, nu)),2)));
-    ans = (pow(nu,4.0/kappa) * pow(sigma,4.0))/(pow(beta(1.0/kappa,nu),4.0))
-      *(-48.0 * pow(lambda,4.0) * pow(beta(2.0/kappa, nu - 1.0/kappa),4.0)
-          + 24.0 * pow(lambda,2.0) *(1.0 + 3.0 * pow(lambda,2.0)) * beta(1.0/kappa,nu) * pow(beta(2.0/kappa, nu - 1.0/kappa),2.0) * beta(3.0/kappa,nu - 2.0/kappa)
-          -32.0 * pow(lambda,2.0) * (1.0 + pow(lambda,2)) * pow(beta(1.0/kappa,nu),2.0) * beta(2.0/kappa, nu - 1.0/kappa) * beta(4.0/kappa,nu - 3.0/kappa)
-          +(1.0 + 10*pow(lambda,2)+5.0*pow(lambda,4.0))*pow(beta(1.0/kappa,nu),3.0)*beta(5.0/kappa,nu - 4.0/kappa));
+    double beta1, beta2, beta3, nuAdj, g, rho, theta, delta, M3, M4;
+    beta1 = beta(1.0/kappa,nu/kappa);
+    beta2 = beta(2.0/kappa,(nu-1)/kappa);
+    beta3 = beta(3.0/kappa,(nu-2)/kappa);
+    nuAdj = (nu+1.0)/kappa;
+    g = (1.0 + 3.0*pow(lambda,2.0)) * 1.0/beta1 * pow(nuAdj,(2.0/kappa)) * beta3;
+    rho = 2.0 * lambda * 1.0/beta1 * pow(nuAdj,(1.0/kappa)) * beta2;
+    theta = 1.0/sqrt(g - pow(rho,2));
+    delta = rho * theta;
+    M3 = Mr(3,theta,lambda,kappa,nu);
+    M4 = Mr(4,theta,lambda,kappa,nu);
+    ans = M4 - 4*M3*delta +6*pow(delta,2) + 3*pow(delta,4);
   }
   return(ans);
 }
