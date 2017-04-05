@@ -319,7 +319,7 @@ double skewness(const double sk, const double ku1, const double ku2, const int n
     ans = M3 - 3.0*delta - pow(delta,3.0);
   }
   if(ndis == 2){
-  double C, theta, S, m, A, A3;
+  double theta, S, m, A, A3;
   A = gammafn(2.0/kappa)/sqrt(gammafn(1.0/kappa) * gammafn(3.0/kappa));
   S = sqrt(1.0 + 3.0*pow(lambda,2) - 4.0 * pow(A,2) * pow(lambda,2));
   theta = sqrt(gammafn(1.0/kappa)/gammafn(3.0/kappa)) * 1.0/S;
@@ -365,7 +365,7 @@ double kurtosis(const double sk, const double ku1, const double ku2, const int n
     ans = M4 - 4*M3*delta +6*pow(delta,2) + 3*pow(delta,4);
   }
   if(ndis == 2){
-    double C, theta, S, m, A, A3, A4;
+    double theta, S, m, A, A3, A4;
     A = gammafn(2.0/kappa)/sqrt(gammafn(1.0/kappa) * gammafn(3.0/kappa));
     S = sqrt(1.0 + 3.0*pow(lambda,2.0) - 4.0 * pow(A,2) * pow(lambda,2));
     theta = sqrt(gammafn(1.0/kappa)/gammafn(3.0/kappa)) * 1.0/S;
