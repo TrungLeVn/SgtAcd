@@ -18,7 +18,6 @@
   idx = model$pidx
   ipars = arglist$ipars
   ipars[estidx, 1] = pars
-  trace = arglist$trace
   T = length(data)
   fit.control = arglist$fit.control
   m = model$maxOrder
