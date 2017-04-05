@@ -23,7 +23,8 @@
 		ifun = function(pars, arglist){
 			alpha = pars[arglist$model$pos.matrix["alpha",1]:arglist$model$pos.matrix["alpha",2]]
 			beta  = pars[arglist$model$pos.matrix["beta",1]:arglist$model$pos.matrix["beta",2]]
-			sum(alpha+beta)
+			gamma = pars[arglist$model$pos.matrix["gamma",1]:arglist$model$pos.matrix["gamma",2]];
+			sum(alpha+beta+0.5*gamma)
 		}
 		nm = names(pars)
 		N = control$restarts
