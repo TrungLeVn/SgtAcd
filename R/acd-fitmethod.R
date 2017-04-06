@@ -103,16 +103,14 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
 #------------------------------------
 .acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts =3),
                          fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 3000,rseed = NULL),
-                         skew0 = NULL, shape10 = NULL,shape20 = NULL, cl = NULL, ...) {
+                         skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   tic = Sys.time()
   vmodel = spec@model$vmodel$model
   #------------
   # Set up several default fit.control arguments
   #------------
-  if(is.null(cl)){
-    cluster = NULL
-  } else{
-    cluster = cl
+  if(!is.null(cluster)){
+    cluster = makePSOCKcluster(cluster)
   }
   if(is.null(fit.control$rseed))
     rseed = 2706 else rseed = fit.control$rseed
@@ -192,6 +190,9 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   # Optimization Starting Parameters Vector & Bounds
   #--------------------s
   tmp = acdstart(ipars, arglist,cluster)
+  if(!is.null(cluster)){
+    cluster = makePSOCKcluster(cluster)
+  }
   arglist = tmp$arglist
   ipars = arglist$ipars = tmp$pars
   arglist$model = model
