@@ -106,7 +106,7 @@
 			fit$robust.matcoef[fixed,] = cbind(fit$coef[fixed], fNA, fNA, fNA)
 			fit$hessian.message = NULL
 		}
-		if(model$modelinc[4] == 0){
+		if(model$modelinc[7] == 0){
 			vtomega = ipars[idx["omega", 1], 1]
 			names(vtomega) = "omega"
 			fit$coef = c(fit$coef, vtomega)
@@ -154,7 +154,7 @@
 			fit$hessian.message = NULL
 		}
 		# variance targeting case
-		if(model$modelinc[4] == 0){
+		if(model$modelinc[7] == 0){
 			vtomega = ipars[idx["omega", 1], 1]
 			names(vtomega) = "omega"
 			fit$coef = c(fit$coef, vtomega)
