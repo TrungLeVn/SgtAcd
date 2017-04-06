@@ -7,7 +7,7 @@ TinY = 1e-08
 #-------
 # Starting parameters for mean equation using ARMA fit
 #-------
-.meqstartpars = function(pars, arglist) {
+.meqstartpars = function(pars, arglist,cluster) {
   data = zoo::zoo(arglist$data,order.by = arglist$index);
   N = length(as.numeric(unlist(data)))
   model = arglist$model
@@ -24,7 +24,7 @@ TinY = 1e-08
                        shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,volsh1 = FALSE,
                        shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype,volsh2 = FALSE))
     print("First round of fitting")
-    tempfit = acdfit(tempspec,data = data)
+    tempfit = acdfit(tempspec,data = data,cl = cluster)
     if(tempfit@fit$convergence!=0){
       tempfit = acdfit(tempspec, data = data,solver = "mssolnp")
       if(tempfit@fit$convergence!=0){
@@ -192,8 +192,8 @@ TinY = 1e-08
 #-----
 # starting parameters w.r.t model specification, getting from the GARCH fit
 #-----
-acdstart = function(pars, arglist) {
-  tmp = .meqstartpars(pars, arglist)
+acdstart = function(pars, arglist,cluster) {
+  tmp = .meqstartpars(pars, arglist,cluster)
   pars = tmp$pars
   arglist = tmp$arglist
   model = arglist$model
