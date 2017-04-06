@@ -18,7 +18,12 @@ TinY = 1e-08
   # Get the estimation for ARMA specfication in mean equation.  To be used to find the starting parameters in variance equation
   if (sum(modelinc[4:6]) > 0){
     tempspec = acdspec(mean.model = list(armaOrder = FALSE, skm = FALSE, shm = FALSE),
-                       distribution.model = model$dmodel, variance.model = model$vmodel)
+                       variance.model = list(model = model$vmodel$model,garchOder = c(modelinc[8],modelinc[9])),
+                       distribution.model = list(model = model$dmodel$model),
+                       skewOrder = model$dmodel$skewOrder,skewmodel = model$dmodel$skewmodel, skewshock = model$dmodel$skewshock,skewshocktype = model$dmodel$skewshocktype,
+                       shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,
+                       shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype)
+    print("First round of fitting")
     tempfit = acdfit(tempspec,data = data)
     if(tempfit@fit$convergence!=0){
       tempfit = acdfit(tempspec, data = data,solver = "mssolnp")
