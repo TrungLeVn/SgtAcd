@@ -122,7 +122,6 @@ void gjracd(int *model, double *pars, int *idx, double *hEst, double *x,
 
   int i;
   double lk=0;
-/*double hm = 0;*/
   // Handle the initial days with lagged. Start the recursion from day m+1 in which m is maximum order
   for(i=0; i<*m; i++)
   {

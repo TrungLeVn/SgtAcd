@@ -14,13 +14,12 @@
 #'        optimization strategies
 #' @param fit.control: List of fitting controls arguments, such as number of simulation to generate starting values of optimization routines
 #' @param cluster: An makePSHOCKcluster object to using parallel in model estimation
-#' @param cores: if we use cluster, state number of cores to be used
 #' @return An ACDfit object which contains information about model estimation
 #' @export acdfit
 #-------------------------
 acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts = 3),
                   fit.control = list(stationarity = 0, fixed.se = 0, scale = 0,n.sim = 2000,rseed = NULL),
-                  skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, cores = NULL, ...) {
+                  skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   UseMethod("acdfit")
 }
 .arfimaxfilteracd = function(modelinc, pars, idx, data, N, arglist) {
@@ -112,7 +111,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
 #------------------------------------
 .acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts =3),
                          fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 3000,rseed = NULL),
-                         skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL,cores = NULL, ...) {
+                         skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   tic = Sys.time()
   vmodel = spec@model$vmodel$model
   #------------
@@ -187,8 +186,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   #-------------------
   # Optimization Starting Parameters Vector & Bounds
   #--------------------
-  tmp = acdstart(ipars, arglist,cores)
-  if(!is.null(cores)) cluster = makePSOCKcluster(cores)
+  tmp = acdstart(ipars, arglist,cluster)
   arglist = tmp$arglist
   ipars = arglist$ipars = tmp$pars
   arglist$model = model
@@ -238,7 +236,6 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
      # parscale["omega"] = var(zdata)
     arglist$returnType = "llh"
     #arglist$returnType = "all"
-    if(!is.null(cores)) cluster = makePSOCKcluster(cores)
     solution = .acdsolver(solver, pars = ipars[estidx, 1], fun = fun, Ifn = NULL, ILB = NULL, IUB = NULL, gr = NULL, hessian = NULL, parscale = parscale,
                           control = solver.control, LB = ipars[estidx, 5], UB = ipars[estidx, 6], cluster = cluster, arglist = arglist,rseed = rseed)
     #-----------------------------------------------------------------------
@@ -310,7 +307,6 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     model$modeldata$index = origindex
     model$modeldata$period = period
   }
-
   # make model list to return some usefule information which will be called by other functions (show, plot, sim etc)
   model = model
   model$garchLL = get("garchLL", garchenv)
