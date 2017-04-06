@@ -34,25 +34,35 @@ TinY = 1e-08
     tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$skewness,kum = tempfit@fit$kurtosis)
     mexdata = NULL
     if(modelinc[4] > 0){
-      mexdata = cbind(mexdata,tmph[,"archm"])
+      mexdata = cbind(mexdata,archm = tmph[,"archm"])
     }
     if(modelinc[5]>0){
-      mexdata = cbind(mexdata,tmph[,"skm"])
+      mexdata = cbind(mexdata,skm = tmph[,"skm"])
     }
     if(modelinc[6]>0){
-      mexdata = cbind(mexdata,tmph[,"kum"])
+      mexdata = cbind(mexdata,kum = tmph[,"kum"])
     }
     y = coredata(data);
     fit.mean = lm(y ~ mexdata)
     pars[idx["mu", 1]:idx["mu", 2], 1] = fit.mean$coef["(Intercept)"]
-    if(modelinc[4]>0){
-      pars[idx["archm", 1]:idx["archm", 2], 1] = fit.mean$coef["archm"]
+    nexreg = length(fit.mean$coef)
+    excoef = unname(fit.mean$coef)
+    if(nexreg == 2){
+      exregNames = names(which(modelinc[4:6]>0));
+      pars[idx[exregNames,1]:idx[exregNames,2],1] = excoef[2]
     }
-    if(modelinc[5]>0){
-      pars[idx["skm", 1]:idx["skm", 2], 1] = fit.mean$coef["skm"]
-    }
-    if(modelinc[6]>0){
-      pars[idx["kum", 1]:idx["kum", 2], 1] = fit.mean$coef["kum"]
+    if(nexreg > 2){
+     exregNames = substr(names(fit.mean$coefficients[2:nexreg]),8,12)
+     names(excoef) = c("intercept",exregNames)
+     if(modelinc[4]>0){
+       pars[idx["archm", 1]:idx["archm", 2], 1] = excoef["archm"]
+     }
+     if(modelinc[5]>0){
+       pars[idx["skm", 1]:idx["skm", 2], 1] = excoef["skm"]
+     }
+     if(modelinc[6]>0){
+       pars[idx["kum", 1]:idx["kum", 2], 1] = excoef["kum"]
+     }
     }
   } else if (modelinc[2] > 0 | modelinc[3] > 0) {
     ttemp = arima(data, order = c(modelinc[2], 0, modelinc[3]), include.mean = modelinc[1], method = "CSS")
