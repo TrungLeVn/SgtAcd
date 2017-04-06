@@ -31,7 +31,9 @@ TinY = 1e-08
         stop("\nacdfit-->error: could not find appropriate starting values for recursion\n")
       }
     }
-    stopCluster(cluster)
+    if(!is.null(cluster)){
+      stopCluster(cluster)
+    }
     tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,kum = tempfit@fit$tshape1)
     mexdata = NULL
     if(modelinc[4] > 0){
