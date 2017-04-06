@@ -16,7 +16,7 @@
 #################################################################################*/
 #ifndef SGTACD_H
 #define SGTACD_H
-void armafilterC(int *model, double *pars, int *idx, double *x, double *res,
+void armafilterC(int *model, double *pars, int *idx, double *hm, double *skm, double *kum, double *x, double *res,
                        double *zrf, double *constm, double *condm,
                        int *m, int *T);
 void sacd(int *model, double *pars, int *idx, double *hEst, double *x,

@@ -18,6 +18,6 @@
 #define __FILTERS_H__
  void sacdfilter(int *model, double *pars, int *idx, double *e, int T, int i, double *h);
  void gjracdfilter(int *model, double *pars, int *idx, double *nres, double *e, int T, int i, double *h);
- void armafilter(int* model, double *pars, int *idx, double *x, double *res, double *zrf,
+ void armafilter(int* model, double *pars, int *idx, double h, double sk, double sh, double *x, double *res, double *zrf,
                        double *constm, double *condm, int m, int i, int T);
 #endif
