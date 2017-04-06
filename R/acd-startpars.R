@@ -24,35 +24,45 @@ TinY = 1e-08
                        shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,volsh1 = FALSE,
                        shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype,volsh2 = FALSE))
     print("First round of fitting")
-    tempfit = acdfit(tempspec,data = data,cl = cluster)
+    tempfit = acdfit(tempspec,data = data,cluster = cluster)
     if(tempfit@fit$convergence!=0){
       tempfit = acdfit(tempspec, data = data,solver = "mssolnp")
       if(tempfit@fit$convergence!=0){
         stop("\nacdfit-->error: could not find appropriate starting values for recursion\n")
       }
     }
-    tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$skewness,kum = tempfit@fit$kurtosis)
+    tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,kum = tempfit@fit$tshape1)
     mexdata = NULL
     if(modelinc[4] > 0){
-      mexdata = cbind(mexdata,tmph[,"archm"])
+      mexdata = cbind(mexdata,archm = tmph[,"archm"])
     }
     if(modelinc[5]>0){
-      mexdata = cbind(mexdata,tmph[,"skm"])
+      mexdata = cbind(mexdata,skm = tmph[,"skm"])
     }
     if(modelinc[6]>0){
-      mexdata = cbind(mexdata,tmph[,"kum"])
+      mexdata = cbind(mexdata,kum = tmph[,"kum"])
     }
     y = coredata(data);
     fit.mean = lm(y ~ mexdata)
     pars[idx["mu", 1]:idx["mu", 2], 1] = fit.mean$coef["(Intercept)"]
-    if(modelinc[4]>0){
-      pars[idx["archm", 1]:idx["archm", 2], 1] = fit.mean$coef["archm"]
+    nexreg = length(fit.mean$coef)
+    excoef = unname(fit.mean$coef)
+    if(nexreg == 2){
+      exregNames = names(which(modelinc[4:6]>0));
+      pars[idx[exregNames,1]:idx[exregNames,2],1] = excoef[2]
     }
-    if(modelinc[5]>0){
-      pars[idx["skm", 1]:idx["skm", 2], 1] = fit.mean$coef["skm"]
-    }
-    if(modelinc[6]>0){
-      pars[idx["kum", 1]:idx["kum", 2], 1] = fit.mean$coef["kum"]
+    if(nexreg > 2){
+     exregNames = substr(names(fit.mean$coefficients[2:nexreg]),8,12)
+     names(excoef) = c("intercept",exregNames)
+     if(modelinc[4]>0){
+       pars[idx["archm", 1]:idx["archm", 2], 1] = excoef["archm"]
+     }
+     if(modelinc[5]>0){
+       pars[idx["skm", 1]:idx["skm", 2], 1] = excoef["skm"]
+     }
+     if(modelinc[6]>0){
+       pars[idx["kum", 1]:idx["kum", 2], 1] = excoef["kum"]
+     }
     }
   } else if (modelinc[2] > 0 | modelinc[3] > 0) {
     ttemp = arima(data, order = c(modelinc[2], 0, modelinc[3]), include.mean = modelinc[1], method = "CSS")
@@ -355,9 +365,9 @@ acdstart = function(pars, arglist,cluster) {
     }
     if (modelinc[18] > 0) {
     if (is.na(pars[idx["volsk", 1]:idx["volsk", 2], 5]))
-      pars[idx["volsk", 1]:idx["volsk", 2], 5] = -2
+      pars[idx["volsk", 1]:idx["volsk", 2], 5] = -10
     if (is.na(pars[idx["volsk", 1]:idx["volsk", 2], 6]))
-      pars[idx["volsk", 1]:idx["volsk", 2], 6] = 2
+      pars[idx["volsk", 1]:idx["volsk", 2], 6] = 10
     if (is.null(start.pars$volsk))
       pars[idx["volsk", 1]:idx["volsk", 2], 1] = 0 else pars[idx["volsk", 1]:idx["volsk", 2], 1] = start.pars$volsk[1]
       if (any(substr(fixed.names, 1, 6) == "volsk")) {
@@ -426,9 +436,9 @@ acdstart = function(pars, arglist,cluster) {
     }
     if (modelinc[23] > 0) {
   if (is.na(pars[idx["volsh1", 1]:idx["volsh1", 2], 5]))
-    pars[idx["volsh1", 1]:idx["volsh1", 2], 5] = -2
+    pars[idx["volsh1", 1]:idx["volsh1", 2], 5] = -10
   if (is.na(pars[idx["volsh1", 1]:idx["volsh1", 2], 6]))
-    pars[idx["volsh1", 1]:idx["volsh1", 2], 6] = 2
+    pars[idx["volsh1", 1]:idx["volsh1", 2], 6] = 10
   if (is.null(start.pars$volsh1))
     pars[idx["volsh1", 1]:idx["volsh1", 2], 1] = 0 else pars[idx["volsh1", 1]:idx["volsh1", 2], 1] = start.pars$volsh1[1]
     if (any(substr(fixed.names, 1, 6) == "volsh1")) {
@@ -499,9 +509,9 @@ acdstart = function(pars, arglist,cluster) {
       }
       if (modelinc[28] > 0) {
         if (is.na(pars[idx["volsh2", 1]:idx["volsh2", 2], 5]))
-          pars[idx["volsh2", 1]:idx["volsh2", 2], 5] = -2
+          pars[idx["volsh2", 1]:idx["volsh2", 2], 5] = -10
         if (is.na(pars[idx["volsh2", 1]:idx["volsh2", 2], 6]))
-          pars[idx["volsh2", 1]:idx["volsh2", 2], 6] = 2
+          pars[idx["volsh2", 1]:idx["volsh2", 2], 6] = 10
         if (is.null(start.pars$volsh2))
           pars[idx["volsh2", 1]:idx["volsh2", 2], 1] = 0 else pars[idx["volsh2", 1]:idx["volsh2", 2], 1] = start.pars$volsh2[1]
           if (any(substr(fixed.names, 1, 6) == "volsh2")) {
