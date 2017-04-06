@@ -26,7 +26,7 @@ TinY = 1e-08
         stop("\nacdfit-->error: could not find appropriate starting values for recursion\n")
       }
     }
-    tmph = cbind(archm = tempfit$sigma,skm = tempfit$skewness,kum = tempfit$kurtosis)
+    tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$skewness,kum = tempfit@fit$kurtosis)
     mexdata = NULL
     if(modelinc[4] > 0){
       mexdata = cbind(mexdata,tmph[,"archm"])
