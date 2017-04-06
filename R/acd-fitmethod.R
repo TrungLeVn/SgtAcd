@@ -22,11 +22,28 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
                   skew0 = NULL, shape10 = NULL,shape20 = NULL, cl = NULL, ...) {
   UseMethod("acdfit")
 }
-.arfimaxfilteracd = function(modelinc, pars, idx, data, N, garchenv) {
+.arfimaxfilteracd = function(modelinc, pars, idx, data, N, arglist) {
   # if(model[1] == 0) pars[1,1] = 0
   m = as.integer(N[1])
   T = as.integer(N[2])
   data = as.double(data)
+  tmph = arglist$tmph
+  garchenv = arglist$garchenv
+  if(modelinc[4]>0){
+    hm = as.double(tmph[,"archm"])
+  } else{
+    hm = double(length = T)
+  }
+  if(modelinc[5]>0){
+    skm = as.double(tmph[,"skm"])
+  } else{
+    skm = double(length = T)
+  }
+  if(modelinc[6]>0){
+    kum = as.double(tmph[,"kum"])
+  } else{
+    kum = double(length = T)
+  }
   res = double(length = T)
   # this routine is used for the mean residuals to initiate the recursion so we ignore arfima before
   zrf = double(length = T)
@@ -36,8 +53,10 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   #condstm is the mu value, if we use arma, adjusted for external regressor if neccessary
   # condm is conditoinal mean, w.r.t mu, ar1, ma1 value
   # res is ret - condm
-  if (modelinc[2] > 0 | modelinc[3] > 0) {
-    ans = try(.C("armafilterC", model = as.integer(modelinc), pars = as.double(pars), idx = as.integer(idx - 1), x = data, res = res,
+  if (sum(modelinc[2:6] > 0)) {
+    ans = try(.C("armafilterC", model = as.integer(modelinc), pars = as.double(pars), idx = as.integer(idx - 1),
+                 hm = hm, skm = skm, kum = kum,
+                 x = data, res = res,
                  zrf = zrf, constm = constm, condm = condm,  m = m, T = T, PACKAGE = "SgtAcd"), silent = TRUE)
     if (inherits(ans, "try-error")) {
       assign(".csol", 1, envir = garchenv)
@@ -232,7 +251,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     pars = solution$sol$pars
     if (!is.null(sol$par)) {
       ipars[estidx, 1] = sol$par
-      if (modelinc[4] == 0) {
+      if (modelinc[7] == 0) {
         # call it once more to get omega
         #fun here is the to get the solution pars, set it back the the filtering and calculate the omega
         tmpx = fun(sol$par, arglist)
@@ -273,7 +292,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
       arglist$estidx = estidx
     }
     fit = .acdmakefitmodel(f = fun, T = n, m = m, timer = timer, convergence = convergence, message = sol$message, hess, arglist = arglist)
-    model$modelinc[4] = modelinc[4]
+    model$modelinc[7] = modelinc[7]
     model$modeldata$data = origdata
     model$modeldata$index = origindex
     model$modeldata$period = period
