@@ -24,15 +24,12 @@ TinY = 1e-08
                        shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,volsh1 = FALSE,
                        shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype,volsh2 = FALSE))
     print("First round of fitting")
-    tempfit = acdfit(tempspec,data = data,cl = cluster)
+    tempfit = acdfit(tempspec,data = data,cluster = cluster)
     if(tempfit@fit$convergence!=0){
       tempfit = acdfit(tempspec, data = data,solver = "mssolnp")
       if(tempfit@fit$convergence!=0){
         stop("\nacdfit-->error: could not find appropriate starting values for recursion\n")
       }
-    }
-    if(!is.null(cluster)){
-      stopCluster(cluster)
     }
     tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,kum = tempfit@fit$tshape1)
     mexdata = NULL
@@ -207,6 +204,9 @@ TinY = 1e-08
 #-----
 acdstart = function(pars, arglist,cluster) {
   tmp = .meqstartpars(pars, arglist,cluster)
+  if(!is.null(cluster)){
+    stopCluster(cluster)
+  }
   pars = tmp$pars
   arglist = tmp$arglist
   model = arglist$model
