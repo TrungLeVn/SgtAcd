@@ -109,9 +109,6 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   #------------
   # Set up several default fit.control arguments
   #------------
-  if(!is.null(cluster)){
-    cluster = makePSOCKcluster(cluster)
-  }
   if(is.null(fit.control$rseed))
     rseed = 2706 else rseed = fit.control$rseed
   if (is.null(solver.control$trace))
@@ -190,9 +187,6 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   # Optimization Starting Parameters Vector & Bounds
   #--------------------s
   tmp = acdstart(ipars, arglist,cluster)
-  if(!is.null(cluster)){
-    cluster = makePSOCKcluster(cluster)
-  }
   arglist = tmp$arglist
   ipars = arglist$ipars = tmp$pars
   arglist$model = model
@@ -321,9 +315,6 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   fit$skhEst = arglist$skhEst
   ans = new("ACDfit", fit = fit, model = model)
   rm(garchenv)
-  if(!is.null(cluster)){
-    stopCluster(cluster)
-  }
   return(ans)
 }
 setMethod("acdfit", signature(spec = "ACDspec"), .acdfit)
