@@ -17,12 +17,12 @@ TinY = 1e-08
   tmph = 0
   # Get the estimation for ARMA specfication in mean equation.  To be used to find the starting parameters in variance equation
   if (sum(modelinc[4:6]) > 0){
-    tempspec = acdspec(mean.model = list(armaOrder = FALSE, skm = FALSE, shm = FALSE),
-                       variance.model = list(model = model$vmodel$model,garchOder = c(modelinc[8],modelinc[9])),
-                       distribution.model = list(model = model$dmodel$model),
-                       skewOrder = model$dmodel$skewOrder,skewmodel = model$dmodel$skewmodel, skewshock = model$dmodel$skewshock,skewshocktype = model$dmodel$skewshocktype,
-                       shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,
-                       shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype)
+    tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, kum = FALSE),
+                       variance.model = list(model = model$vmodel$model,garchOrder = c(modelinc[8],modelinc[9])),
+                       distribution.model = list(model = model$dmodel$model,
+                       skewOrder = model$dmodel$skewOrder,skewmodel = model$dmodel$skewmodel, skewshock = model$dmodel$skewshock,skewshocktype = model$dmodel$skewshocktype,volsk = FALSE,
+                       shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,volsh1 = FALSE,
+                       shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype,volsh2 = FALSE))
     print("First round of fitting")
     tempfit = acdfit(tempspec,data = data)
     if(tempfit@fit$convergence!=0){
@@ -36,7 +36,7 @@ TinY = 1e-08
     if(modelinc[4] > 0){
       mexdata = cbind(mexdata,tmph[,"archm"])
     }
-    if(modelin[5]>0){
+    if(modelinc[5]>0){
       mexdata = cbind(mexdata,tmph[,"skm"])
     }
     if(modelinc[6]>0){
