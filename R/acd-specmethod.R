@@ -21,7 +21,7 @@
 #-----------------------------------------------------------------------------------
 
 acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
-                   mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = TRUE, skm = FALSE, kum = FALSE),
+                   mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, kum = FALSE),
                    distribution.model = list(model = "sgt", skewOrder = c(1,0, 1),skewshock = 1, skewshocktype = 1, skewmodel = "quad",volsk = FALSE,
                                              shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad",volsh1 = FALSE,
                                              shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad",volsh2 = FALSE,exp.rate = 1),
