@@ -204,9 +204,6 @@ TinY = 1e-08
 #-----
 acdstart = function(pars, arglist,cluster) {
   tmp = .meqstartpars(pars, arglist,cluster)
-  if(!is.null(cluster)){
-    stopCluster(cluster)
-  }
   pars = tmp$pars
   arglist = tmp$arglist
   model = arglist$model
@@ -368,9 +365,9 @@ acdstart = function(pars, arglist,cluster) {
     }
     if (modelinc[18] > 0) {
     if (is.na(pars[idx["volsk", 1]:idx["volsk", 2], 5]))
-      pars[idx["volsk", 1]:idx["volsk", 2], 5] = -2
+      pars[idx["volsk", 1]:idx["volsk", 2], 5] = -10
     if (is.na(pars[idx["volsk", 1]:idx["volsk", 2], 6]))
-      pars[idx["volsk", 1]:idx["volsk", 2], 6] = 2
+      pars[idx["volsk", 1]:idx["volsk", 2], 6] = 10
     if (is.null(start.pars$volsk))
       pars[idx["volsk", 1]:idx["volsk", 2], 1] = 0 else pars[idx["volsk", 1]:idx["volsk", 2], 1] = start.pars$volsk[1]
       if (any(substr(fixed.names, 1, 6) == "volsk")) {
@@ -439,9 +436,9 @@ acdstart = function(pars, arglist,cluster) {
     }
     if (modelinc[23] > 0) {
   if (is.na(pars[idx["volsh1", 1]:idx["volsh1", 2], 5]))
-    pars[idx["volsh1", 1]:idx["volsh1", 2], 5] = -2
+    pars[idx["volsh1", 1]:idx["volsh1", 2], 5] = -10
   if (is.na(pars[idx["volsh1", 1]:idx["volsh1", 2], 6]))
-    pars[idx["volsh1", 1]:idx["volsh1", 2], 6] = 2
+    pars[idx["volsh1", 1]:idx["volsh1", 2], 6] = 10
   if (is.null(start.pars$volsh1))
     pars[idx["volsh1", 1]:idx["volsh1", 2], 1] = 0 else pars[idx["volsh1", 1]:idx["volsh1", 2], 1] = start.pars$volsh1[1]
     if (any(substr(fixed.names, 1, 6) == "volsh1")) {
@@ -512,9 +509,9 @@ acdstart = function(pars, arglist,cluster) {
       }
       if (modelinc[28] > 0) {
         if (is.na(pars[idx["volsh2", 1]:idx["volsh2", 2], 5]))
-          pars[idx["volsh2", 1]:idx["volsh2", 2], 5] = -2
+          pars[idx["volsh2", 1]:idx["volsh2", 2], 5] = -10
         if (is.na(pars[idx["volsh2", 1]:idx["volsh2", 2], 6]))
-          pars[idx["volsh2", 1]:idx["volsh2", 2], 6] = 2
+          pars[idx["volsh2", 1]:idx["volsh2", 2], 6] = 10
         if (is.null(start.pars$volsh2))
           pars[idx["volsh2", 1]:idx["volsh2", 2], 1] = 0 else pars[idx["volsh2", 1]:idx["volsh2", 2], 1] = start.pars$volsh2[1]
           if (any(substr(fixed.names, 1, 6) == "volsh2")) {
