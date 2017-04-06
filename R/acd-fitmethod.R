@@ -191,7 +191,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   #-------------------
   # Optimization Starting Parameters Vector & Bounds
   #--------------------s
-  tmp = acdstart(ipars, arglist)
+  tmp = acdstart(ipars, arglist,cluster)
   arglist = tmp$arglist
   ipars = arglist$ipars = tmp$pars
   arglist$model = model
