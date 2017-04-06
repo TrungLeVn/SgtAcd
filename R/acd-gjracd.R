@@ -23,8 +23,7 @@
   m = model$maxOrder
   N = c(m, T)
   modelinc = model$modelinc
-  hm = arglist$tmph
-  rx = .arfimaxfilteracd(modelinc, ipars[, 1], idx, data = data, N = N, arglist$garchenv)
+  rx = .arfimaxfilteracd(modelinc, ipars[, 1], idx, data = data, N = N, arglist)
   # res is the residuals of mean process. zrf is the standardized residuals
   res = rx$res
   zrf = rx$zrf
@@ -40,7 +39,7 @@
   persist = (sum(ipars[idx["alpha",1]:idx["alpha",2],1]) + sum(ipars[idx["beta",1]:idx["beta",2],1]))
   # unconditional sigma value
   #mvar = mean(res*res)
-  if(modelinc[4]>0){
+  if(modelinc[7]>0){
     ipars[idx["omega",1],1] = max(eps, ipars[idx["omega",1],1])
     hEst = mvar
   } else{
