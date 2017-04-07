@@ -391,3 +391,40 @@ double kurtosis(const double sk, const double ku1, const double ku2, const int n
   }
   return(ans);
 }
+double Pskewness(const double sk, const double ku1, const double ku2, const int ndis)
+{
+  double lambda = sk;
+  double kappa = ku1;
+  double nu = ku2;
+  double A, S;
+  double ans = 0.0;
+  if(ndis ==1){
+    double beta1, beta2, beta3;
+    beta1 = beta(1.0/kappa,nu/kappa);
+    beta2 = beta(2.0/kappa,(nu-1.0)/kappa);
+    beta3 = beta(3.0/kappa,(nu-2.0)/kappa);
+    A = beta2 * 1/sqrt(beta1) * 1/sqrt(beta3);
+    S = sqrt(1 + 3*pow(lambda,2) - 4 * pow(A,2) * pow(lambda,2));
+    ans = 2 * lambda * A * 1/S;
+  }
+  if(ndis == 2){
+    double gamma1, gamma2, gamma3;
+    gamma1 = gammafn(1.0/kappa);
+    gamma2 = gammafn(2.0/kappa);
+    gamma3 = gammafn(3.0/kappa);
+    A = gamma2/sqrt(gamma1 * gamma3);
+    S = sqrt(1 + 3*pow(lambda,2) - 4 * pow(A,2) * pow(lambda,2));
+    ans = 2 * lambda * A/S;
+  }
+  if(ndis == 3){
+    kappa = 2.0;
+    double beta1, beta2, beta3;
+    beta1 = beta(1.0/kappa,nu/kappa);
+    beta2 = beta(2.0/kappa,(nu-1.0)/kappa);
+    beta3 = beta(3.0/kappa,(nu-2.0)/kappa);
+    A = beta2 * 1/sqrt(beta1) * 1/sqrt(beta3);
+    S = sqrt(1 + 3*pow(lambda,2) - 4 * pow(A,2) * pow(lambda,2));
+    ans = 2 * lambda * A * 1/S;
+  }
+  return(ans);
+}
