@@ -14,7 +14,9 @@
 ##   GNU General Public License for more details.
 ##
 ###############################################################
-
+.onUnload <- function (libpath) {
+  library.dynam.unload("SgtAcd", libpath)
+}
 .acdmakefitmodel = function(f, T, m, timer, convergence, message, hess, arglist)
 {
 	# Turn Stationarity Off for numerical derivative calculation
