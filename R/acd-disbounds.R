@@ -139,11 +139,11 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   skew.UB = dbounds[2]
   par = par.LB = par.UB = numeric()
   # intercept
-  par[1] = logtransform(unconpar, skew.LB, skew.UB, inverse = TRUE)
-  par.LB[1] = logtransform(skew.LB * 0.99, skew.LB, skew.UB,inverse = TRUE)
-  par.UB[1] = logtransform(skew.UB * 0.99, skew.LB, skew.UB,inverse = TRUE)
+  par = logtransform(unconpar, skew.LB, skew.UB, inverse = TRUE)
+  par.LB = logtransform(skew.LB * 0.99, skew.LB, skew.UB,inverse = TRUE)
+  par.UB = logtransform(skew.UB * 0.99, skew.LB, skew.UB,inverse = TRUE)
   # acdOrder
-  par = c(par,0.1,0.1,0.5)
+  par = c(par,0,0,0.4)
   par.LB = c(par.LB, -5, -5,0+.eps)
   par.UB = c(par.UB,5,5,0.9-.eps)
   return(list(skewpars = par, skewpar.LB = par.LB, skewpar.UB = par.UB, sk0 = par[1]))
@@ -154,14 +154,14 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   shape1.UB = dbounds[2]
   par = par.LB = par.UB = numeric()
    # intercept
-  par[1] = exptransform1(unconpar, shape1.LB,inverse = TRUE)
-  par.LB[1] = exptransform1(shape1.LB*1.001,shape1.LB,inverse = TRUE)
-  par.UB[1] = exptransform1(shape1.UB*0.99,shape1.LB,inverse = TRUE)
+  par = exptransform1(unconpar, shape1.LB,inverse = TRUE)
+  par.LB = exptransform1(shape1.LB*1.001,shape1.LB,inverse = TRUE)
+  par.UB = exptransform1(shape1.UB*0.99,shape1.LB,inverse = TRUE)
   #par[1] = logtransform(unconpar,shape1.LB,shape1.UB,inverse = TRUE)
   #par.LB[1] = logtransform(shape1.LB * 1.0001, shape1.LB, shape1.UB,inverse = TRUE)
   #par.UB[1] = logtransform(shape1.UB * 0.999, shape1.LB, shape1.UB,inverse = TRUE)
   # alpha1 and alpha2 with lower/upper bounds
-  par = c(par,0,0,0.5)
+  par = c(par,0,0,0.4)
   par.LB = c(par.LB, -5, -5,-0.9+.eps)
   #par.LB = c(par.LB, -1, -1,0+.eps)
   par.UB = c(par.UB,5,5,0.9-.eps)
@@ -173,10 +173,10 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   shape2.UB = dbounds[2]
   par = par.LB = par.UB = numeric()
      # intercept
-  par[1] = logtransform(unconpar,shape2.LB,shape2.UB,inverse = TRUE)
-  #par[1] = -5
-  par.LB[1] = logtransform(shape2.LB * 1.001, shape2.LB, shape2.UB,inverse = TRUE)
-  par.UB[1] = logtransform(shape2.UB * 0.99, shape2.LB, shape2.UB,inverse = TRUE)
+  par = logtransform(unconpar,shape2.LB,shape2.UB,inverse = TRUE)
+  par.LB = logtransform(shape2.LB * 1.001, shape2.LB, shape2.UB,inverse = TRUE)
+  #par.UB[1] = 0
+  par.UB = logtransform(shape2.UB * 0.99, shape2.LB, shape2.UB,inverse = TRUE)
   #par[1] = exptransform2(unconpar,shape2.LB,shape2.UB,inverse = TRUE)
   #par.LB[1] = exptransform2(shape2.LB * 1.0001,shape2.LB,shape2.UB,inverse = TRUE)
   #par.UB[2] = exptransform2(shape2.UB * 0.999,shape2.LB,shape2.UB,inverse = TRUE)
