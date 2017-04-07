@@ -61,6 +61,7 @@
 	fit$tempshape2 = temp$tempshape2
 	fit$skewness = temp$skewness
 	fit$kurtosis = temp$kurtosis
+	fit$Pskew = temp$Pskewness
 
 	if(sum(ipars[,2])>0){
 		pall = ipars[estidx | as.logical(ipars[,2]==1), 1]

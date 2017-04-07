@@ -71,6 +71,7 @@
   LHT 	= double(length = T)
   skew = double(length = T)
   kurt = double(length = T)
+  pskew = double(length = T)
   ans = try(.C("sacd",
                model = as.integer(modelinc),
                pars = as.double(ipars[,1]),
@@ -98,6 +99,7 @@
                LHT = double(T),
                skew = double(T),
                kurt = double(T),
+               pskew = double(T),
                PACKAGE = "SgtAcd"), silent = TRUE )
   if( inherits(ans, "try-error") ){
     cat(paste("\nacdfit-->warning: ", ans,"\n", sep=""))
@@ -116,7 +118,7 @@
   tempshape2 = ans$tempshape2
   skew = ans$skew;
   kurt = ans$kurt;
-
+  pskew = ans$pskew;
   if( is.finite(llh) && !is.na(llh) && !is.nan(llh) ){
     assign("racd_llh", llh, envir = arglist$garchenv)
   } else {
@@ -130,6 +132,6 @@
                all = list(llh = llh, h = h, res = res, z = z, kappa = kappa,
                           tskew = tskew, tshape1 = tshape1, tempshape1 = tempshape1,
                           tshape2 = tshape2, tempshape2 = tempshape2,
-                          tempskew = tempskew, LHT = LHT, skewness = skew, kurtosis = kurt))
+                          tempskew = tempskew, LHT = LHT, skewness = skew, kurtosis = kurt,Pskewness = pskew))
   return( ans )
 }

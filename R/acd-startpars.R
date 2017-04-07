@@ -16,7 +16,7 @@ TinY = 1e-08
   tmph = 0
   # Get the estimation for ARMA specfication in mean equation.  To be used to find the starting parameters in variance equation
   if (sum(modelinc[4:6]) > 0){
-    tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, kum = FALSE),
+    tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, pskm = FALSE),
                        variance.model = list(model = model$vmodel$model,garchOrder = c(modelinc[8],modelinc[9])),
                        distribution.model = list(model = model$dmodel$model,
                        skewOrder = model$dmodel$skewOrder,skewmodel = model$dmodel$skewmodel, skewshock = model$dmodel$skewshock,skewshocktype = model$dmodel$skewshocktype,volsk = FALSE,
@@ -30,7 +30,7 @@ TinY = 1e-08
         stop("\nacdfit-->error: could not find appropriate starting values for recursion\n")
       }
     }
-    tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,kum = tempfit@fit$tshape1)
+    tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,pskm = tempfit@fit$tshape1)
     mexdata = NULL
     if(modelinc[4] > 0){
       mexdata = cbind(mexdata,archm = tmph[,"archm"])
@@ -39,7 +39,7 @@ TinY = 1e-08
       mexdata = cbind(mexdata,skm = tmph[,"skm"])
     }
     if(modelinc[6]>0){
-      mexdata = cbind(mexdata,kum = tmph[,"kum"])
+      mexdata = cbind(mexdata,pskm = tmph[,"pskm"])
     }
     y = coredata(data);
     fit.mean = lm(y ~ mexdata)
@@ -60,7 +60,7 @@ TinY = 1e-08
        pars[idx["skm", 1]:idx["skm", 2], 1] = excoef["skm"]
      }
      if(modelinc[6]>0){
-       pars[idx["kum", 1]:idx["kum", 2], 1] = excoef["kum"]
+       pars[idx["pskm", 1]:idx["pskm", 2], 1] = excoef["pskm"]
      }
     }
   } else if (modelinc[2] > 0 | modelinc[3] > 0) {
@@ -178,18 +178,18 @@ TinY = 1e-08
       pars[manames[mamatch], 6] = as.numeric(fixed.pars[j])
     }
   }
-  # kum
+  # pskm
   if (modelinc[6] > 0) {
-    manames = paste("kum", 1:modelinc[6], sep = "")
-    pars[idx["kum", 1]:idx["kum", 2], 5] = -5 + TinY
-    pars[idx["kum", 1]:idx["kum", 2], 6] = 5 - TinY
-    if (any(substr(start.names, 1, 2) == "kum")) {
-      j = which(substr(start.names, 1, 2) == "kum")
+    manames = paste("pskm", 1:modelinc[6], sep = "")
+    pars[idx["pskm", 1]:idx["pskm", 2], 5] = -5 + TinY
+    pars[idx["pskm", 1]:idx["pskm", 2], 6] = 5 - TinY
+    if (any(substr(start.names, 1, 2) == "pskm")) {
+      j = which(substr(start.names, 1, 2) == "pskm")
       mamatch = charmatch(start.names[j], manames)
       pars[manames[mamatch], 1] = as.numeric(start.pars[j])
     }
-    if (any(substr(fixed.names, 1, 2) == "kum")) {
-      j = which(substr(fixed.names, 1, 2) == "kum")
+    if (any(substr(fixed.names, 1, 2) == "pskm")) {
+      j = which(substr(fixed.names, 1, 2) == "pskm")
       mamatch = charmatch(fixed.names[j], manames)
       pars[manames[mamatch], 1] = as.numeric(fixed.pars[j])
       pars[manames[mamatch], 5] = as.numeric(fixed.pars[j])

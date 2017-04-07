@@ -21,7 +21,7 @@
 #-----------------------------------------------------------------------------------
 
 acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
-                   mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, kum = FALSE),
+                   mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, pskm = FALSE),
                    distribution.model = list(model = "sgt", skewOrder = c(1,0, 1),skewshock = 1, skewshocktype = 1, skewmodel = "quad",volsk = FALSE,
                                              shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad",volsh1 = FALSE,
                                              shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad",volsh2 = FALSE,exp.rate = 1),
@@ -44,14 +44,14 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
 }
 
 .acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
-                     mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, kum = FALSE),
+                     mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, pskm = FALSE),
                      distribution.model = list(model = "sgt", skewOrder = c(1,0, 1 ),skewshock = 1, skewshocktype = 1, skewmodel = "quad", volsk = FALSE,
                                                shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad", volsh1 = FALSE,
                                                shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad", volsh2 = FALSE, exp.rate = 1),
                      start.pars = list(), fixed.pars = list()) {
   # specify the parameter list
   modelinc = rep(0, 35)
-  names(modelinc) = c("mu", "ar", "ma", "archm", "skm", "kum",
+  names(modelinc) = c("mu", "ar", "ma", "archm", "skm", "pskm",
                       "omega", "alpha", "beta", "gamma",
                       "skew", "shape1", "shape2",
                       "skcons", "skalpha", "skgamma", "skbeta", "volsk",
@@ -65,7 +65,7 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   #-----
   # Check the input of arguments in acdspec
   #----
-  mm = match(names(mean.model), c("armaOrder", "include.mean","archm","skm","kum"))
+  mm = match(names(mean.model), c("armaOrder", "include.mean","archm","skm","pskm"))
   if (any(is.na(mm))) {
     idx = which(is.na(mm))
     enx = NULL
@@ -112,14 +112,14 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   #---------------------------------------
   # Specify the mean equation. The undefined argument will take default specifications
   #---------------------------------------
-  mmodel = list(armaOrder = c(0, 0), include.mean = TRUE, archm = FALSE, skm = FALSE, shm = FALSE)
+  mmodel = list(armaOrder = c(0, 0), include.mean = TRUE, archm = FALSE, skm = FALSE, pskm = FALSE)
   idx = na.omit(match(names(mean.model), names(mmodel)))
   if (length(idx) > 0)
     for (i in 1:length(idx)) mmodel[idx[i]] = mean.model[i]
-  if(as.logical(mmodel$archm) || as.logical(mmodel$skm) || as.logical(mmodel$shm))
+  if(as.logical(mmodel$archm) || as.logical(mmodel$skm) || as.logical(mmodel$pskm))
   {
     if(sum(mmodel$armaOrder) > 0){
-      stop("\nacdpec-->error: ARMA specification is not allowed if we allow for either archm, skm or shm.\n", call. = FALSE)
+      stop("\nacdpec-->error: ARMA specification is not allowed if we allow for either archm, skm or pskm\n", call. = FALSE)
     }
     if( as.logical(mmodel$archm) ){
       modelinc[4] = 1
@@ -127,7 +127,7 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
     if( as.logical(mmodel$skm) ){
       modelinc[5] = 1
     }
-    if( as.logical(mmodel$shm) ){
+    if( as.logical(mmodel$pskm) ){
       modelinc[6] = 1
     }
   } else{
@@ -306,7 +306,7 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   pos = 1
   pos.matrix = matrix(0, ncol = 3, nrow = 28)
   colnames(pos.matrix) = c("start", "stop", "include")
-  rownames(pos.matrix) = c("mu", "ar", "ma", "archm", "skm", "kum",
+  rownames(pos.matrix) = c("mu", "ar", "ma", "archm", "skm", "pskm",
                            "omega", "alpha", "beta", "gamma",
                            "skew", "shape1","shape2",
                            "skcons", "skalpha", "skgamma", "skbeta", "volsk",
@@ -359,7 +359,7 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   colnames(pars) = c("Level", "Fixed", "Include", "Estimate", "LB", "UB")
   pidx = matrix(NA, nrow = 28, ncol = 2)
   colnames(pidx) = c("begin", "end")
-  rownames(pidx) = c("mu", "ar", "ma", "archm", "skm", "kum",
+  rownames(pidx) = c("mu", "ar", "ma", "archm", "skm", "pskm",
                      "omega", "alpha", "beta", "gamma",
                      "skew", "shape1","shape2",
                      "skcons", "skalpha", "skgamma", "skbeta", "volsk",
@@ -447,10 +447,10 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   if (pos.matrix[6, 3] == 1) {
     pars[nx + pn, 3] = 1
     pars[nx + pn, 1] = 0
-    if (any(!is.na(match(fixed.names, "kum"))))
+    if (any(!is.na(match(fixed.names, "pskm"))))
       pars[nx + pn, 2] = 1 else pars[nx + pn, 4] = 1
   }
-  pnames = c(pnames, "kum")
+  pnames = c(pnames, "pskm")
   pidx[6, 2] = nx + pn
 
   nx = nx + pn

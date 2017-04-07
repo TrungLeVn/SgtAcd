@@ -40,9 +40,9 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     skm = double(length = T)
   }
   if(modelinc[6]>0){
-    kum = as.double(tmph[,"kum"])
+    pskm = as.double(tmph[,"pskm"])
   } else{
-    kum = double(length = T)
+    pskm = double(length = T)
   }
   res = double(length = T)
   # this routine is used for the mean residuals to initiate the recursion so we ignore arfima before
@@ -55,7 +55,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   # res is ret - condm
   if (sum(modelinc[2:6] > 0)) {
     ans = try(.C("armafilterC", model = as.integer(modelinc), pars = as.double(pars), idx = as.integer(idx - 1),
-                 hm = hm, skm = skm, kum = kum,
+                 hm = hm, skm = skm, pskm = pskm,
                  x = data, res = res,
                  zrf = zrf, constm = constm, condm = condm,  m = m, T = T, PACKAGE = "SgtAcd"), silent = TRUE)
     if (inherits(ans, "try-error")) {
