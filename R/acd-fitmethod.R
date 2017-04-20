@@ -18,7 +18,7 @@
 #' @export acdfit
 #-------------------------
 acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts = 3),
-                  fit.control = list(stationarity = 0, fixed.se = 0, scale = 0,n.sim = 2000,rseed = NULL),
+                  fit.control = list(stationarity = 0, fixed.se = 0, scale = 0,n.sim = 5000,rseed = NULL),
                   skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   UseMethod("acdfit")
 }
@@ -110,7 +110,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
 #' @useDynLib SgtAcd
 #------------------------------------
 .acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts =3),
-                         fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 3000,rseed = NULL),
+                         fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 5000,rseed = NULL),
                          skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   tic = Sys.time()
   vmodel = spec@model$vmodel$model
@@ -128,7 +128,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   if (is.null(fit.control$scale))
     fit.control$scale = FALSE
   if (is.null(fit.control$n.sim))
-    fit.control$n.sim = 2000
+    fit.control$n.sim = 5000
   #-------
   # Get the fit.control
   #-------
