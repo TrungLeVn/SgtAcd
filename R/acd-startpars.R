@@ -7,61 +7,101 @@ TinY = 1e-08
 #-------
 # Starting parameters for mean equation using ARMA fit
 #-------
-.meqstartpars = function(pars, arglist) {
+.meqstartpars = function(pars, arglist,cluster) {
   data = zoo::zoo(arglist$data,order.by = arglist$index);
   N = length(as.numeric(unlist(data)))
   model = arglist$model
   modelinc = model$modelinc
-  modeldesc = model$modeldesc
   idx = model$pidx
   tmph = 0
   # Get the estimation for ARMA specfication in mean equation.  To be used to find the starting parameters in variance equation
   if (sum(modelinc[4:6]) > 0){
-    tempspec = acdspec(mean.model = list(armaOrder = FALSE, skm = FALSE, shm = FALSE),
-                       distribution.model = model$dmodel, variance.model = model$vmodel)
-    tempfit = acdfit(tempspec,data = data)
+    tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, pskm = FALSE),
+                       variance.model = list(model = model$vmodel$model,garchOrder = c(modelinc[8],modelinc[9])),
+                       distribution.model = list(model = model$dmodel$model,
+                                                 skewOrder = model$dmodel$skewOrder,skewmodel = model$dmodel$skewmodel, skewshock = model$dmodel$skewshock,skewshocktype = model$dmodel$skewshocktype,volsk = FALSE,
+                                                 shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,volsh1 = FALSE,
+                                                 shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype,volsh2 = FALSE))
+    print("First round of fitting")
+    tempfit = .acdfit(tempspec,data = data,cluster = cluster)
     if(tempfit@fit$convergence!=0){
       tempfit = acdfit(tempspec, data = data,solver = "mssolnp")
       if(tempfit@fit$convergence!=0){
         stop("\nacdfit-->error: could not find appropriate starting values for recursion\n")
       }
     }
-    tmph = cbind(archm = tempfit$sigma,skm = tempfit$skewness,kum = tempfit$kurtosis)
+    tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,pskm = tempfit@fit$Pskewness)
     mexdata = NULL
     if(modelinc[4] > 0){
-      mexdata = cbind(mexdata,tmph[,"archm"])
+     mexdata = cbind(mexdata,archm = tmph[,"archm"])
     }
-    if(modelin[5]>0){
-      mexdata = cbind(mexdata,tmph[,"skm"])
+    if(modelinc[5] > 0){
+      mexdata = cbind(mexdata,skm = tmph[,"skm"])
     }
-    if(modelinc[6]>0){
-      mexdata = cbind(mexdata,tmph[,"kum"])
+    if(modelinc[6] > 0){
+      mexdata = cbind(mexdata,pskm = tmph[,"pskm"])
     }
     y = coredata(data);
-    fit.mean = lm(y ~ mexdata)
-    pars[idx["mu", 1]:idx["mu", 2], 1] = fit.mean$coef["(Intercept)"]
-    if(modelinc[4]>0){
-      pars[idx["archm", 1]:idx["archm", 2], 1] = fit.mean$coef["archm"]
+    # without arma
+    if(sum(modelinc[2:3])==0){
+      fit.mean = lm(y ~ mexdata)
+      pars[idx["mu", 1]:idx["mu", 2], 1] = fit.mean$coef["(Intercept)"]
+      nexreg = length(fit.mean$coef)
+      excoef = unname(fit.mean$coef)
+      if(nexreg == 2){
+        exregNames = names(which(modelinc[4:6]>0));
+        pars[idx[exregNames,1]:idx[exregNames,2],1] = excoef[2]
+      }
+      if(nexreg > 2){
+        exregNames = substr(names(fit.mean$coefficients[2:nexreg]),8,12)
+        names(excoef) = c("intercept",exregNames)
+        if(modelinc[4]>0){
+          pars[idx["archm", 1]:idx["archm", 2], 1] = excoef["archm"]
+        }
+        if(modelinc[5]>0){
+          pars[idx["skm", 1]:idx["skm", 2], 1] = excoef["skm"]
+        }
+        if(modelinc[6]>0){
+          pars[idx["pskm", 1]:idx["pskm", 2], 1] = excoef["pskm"]
+        }
+      }
     }
-    if(modelinc[5]>0){
-      pars[idx["skm", 1]:idx["skm", 2], 1] = fit.mean$coef["skm"]
+    # with arma
+    if(sum(modelinc[2:3])>0){
+      ttemp = arima0(y, order = c(modelinc[2], 0, modelinc[3]), include.mean = modelinc[1], xreg = mexdata)
+      fit.mean = ttemp$coef
+      if (modelinc[1] > 0) {
+        pars[idx["mu", 1]:idx["mu", 2], 1] = fit.mean["intercept"]
+      }
+      if (modelinc[2] > 0){
+        pars[idx["ar", 1]:idx["ar", 2], 1] = fit.mean[c(paste("ar", 1:modelinc[2], sep = ""))]
+      }
+      if (modelinc[3] > 0){
+        pars[idx["ma", 1]:idx["ma", 2], 1] = fit.mean[c(paste("ma", 1:modelinc[3], sep = ""))]
+      }
+      if(modelinc[4]>0){
+        pars[idx["archm", 1]:idx["archm", 2], 1] = fit.mean["archm"]
+      }
+      if(modelinc[5]>0){
+        pars[idx["skm", 1]:idx["skm", 2], 1] = fit.mean["skm"]
+      }
+      if(modelinc[6]>0){
+        pars[idx["pskm", 1]:idx["pskm", 2], 1] = fit.mean["pskm"]
+      }
     }
-    if(modelinc[6]>0){
-      pars[idx["kum", 1]:idx["kum", 2], 1] = fit.mean$coef["kum"]
-    }
-  } else if (modelinc[2] > 0 | modelinc[3] > 0) {
-    ttemp = arima(data, order = c(modelinc[2], 0, modelinc[3]), include.mean = modelinc[1], method = "CSS")
-    fit.mean = ttemp$coef
-    if (modelinc[1] > 0) {
-      pars[idx["mu", 1]:idx["mu", 2], 1] = fit.mean["intercept"]
-    }
-    if (modelinc[2] > 0){
-      pars[idx["ar", 1]:idx["ar", 2], 1] = fit.mean[c(paste("ar", 1:modelinc[2], sep = ""))]
-    }
-    if (modelinc[3] > 0){
-      pars[idx["ma", 1]:idx["ma", 2], 1] = fit.mean[c(paste("ma", 1:modelinc[3], sep = ""))]
-    }
-   } else{
+   } else if(sum(modelinc[2:3])>0&&sum(modelinc[4:6])==0){
+     ttemp = arima(data, order = c(modelinc[2], 0, modelinc[3]), include.mean = modelinc[1], method = "CSS")
+     fit.mean = ttemp$coef
+     if (modelinc[1] > 0) {
+        pars[idx["mu", 1]:idx["mu", 2], 1] = fit.mean["intercept"]
+      }
+     if (modelinc[2] > 0){
+         pars[idx["ar", 1]:idx["ar", 2], 1] = fit.mean[c(paste("ar", 1:modelinc[2], sep = ""))]
+      }
+     if (modelinc[3] > 0){
+         pars[idx["ma", 1]:idx["ma", 2], 1] = fit.mean[c(paste("ma", 1:modelinc[3], sep = ""))]
+      }
+     } else {
      pars[idx["mu", 1]:idx["mu", 2], 1] = 0
    }
   arglist$tmph = tmph
@@ -164,18 +204,18 @@ TinY = 1e-08
       pars[manames[mamatch], 6] = as.numeric(fixed.pars[j])
     }
   }
-  # kum
+  # pskm
   if (modelinc[6] > 0) {
-    manames = paste("kum", 1:modelinc[6], sep = "")
-    pars[idx["kum", 1]:idx["kum", 2], 5] = -5 + TinY
-    pars[idx["kum", 1]:idx["kum", 2], 6] = 5 - TinY
-    if (any(substr(start.names, 1, 2) == "kum")) {
-      j = which(substr(start.names, 1, 2) == "kum")
+    manames = paste("pskm", 1:modelinc[6], sep = "")
+    pars[idx["pskm", 1]:idx["pskm", 2], 5] = -5 + TinY
+    pars[idx["pskm", 1]:idx["pskm", 2], 6] = 5 - TinY
+    if (any(substr(start.names, 1, 2) == "pskm")) {
+      j = which(substr(start.names, 1, 2) == "pskm")
       mamatch = charmatch(start.names[j], manames)
       pars[manames[mamatch], 1] = as.numeric(start.pars[j])
     }
-    if (any(substr(fixed.names, 1, 2) == "kum")) {
-      j = which(substr(fixed.names, 1, 2) == "kum")
+    if (any(substr(fixed.names, 1, 2) == "pskm")) {
+      j = which(substr(fixed.names, 1, 2) == "pskm")
       mamatch = charmatch(fixed.names[j], manames)
       pars[manames[mamatch], 1] = as.numeric(fixed.pars[j])
       pars[manames[mamatch], 5] = as.numeric(fixed.pars[j])
@@ -187,8 +227,8 @@ TinY = 1e-08
 #-----
 # starting parameters w.r.t model specification, getting from the GARCH fit
 #-----
-acdstart = function(pars, arglist) {
-  tmp = .meqstartpars(pars, arglist)
+acdstart = function(pars, arglist,cluster) {
+  tmp = .meqstartpars(pars, arglist,cluster)
   pars = tmp$pars
   arglist = tmp$arglist
   model = arglist$model
@@ -295,7 +335,11 @@ acdstart = function(pars, arglist) {
       }
   }
   if (modelinc[14] > 0) {
-    uncskew = bounds$skew
+    if(is.null(skew0)){
+      uncskew = bounds$skew
+    }else{
+      uncskew = skew0
+    }
     xskew = .acdskewbounds(modelinc[15:17], uncskew, model$dmodel$model, dbounds[1:2])
     arglist$skhEst[1] = xskew$sk0
     if (is.na(pars[idx["skcons", 1]:idx["skcons", 2], 5]))
@@ -363,7 +407,11 @@ acdstart = function(pars, arglist) {
   }
 }
   if (modelinc[19] > 0) {
-    uncshape1 = bounds$shape1
+    if(is.null(shape10)){
+      uncshape1 = bounds$shape1
+    }else{
+      uncshape1 = shape10
+    }
     xshape1 = .acdshape1bounds(modelinc[20:22], uncshape1, model$dmodel$model, dbounds[c(3,4,7)])
     arglist$skhEst[2] = xshape1$sh0
     pxd = which(is.na(pars[idx["sh1cons", 1]:idx["sh1cons", 2], 5]))
@@ -434,7 +482,11 @@ acdstart = function(pars, arglist) {
 }
 }
   if (modelinc[24] > 0) {
+    if(is.null(shape20)){
       uncshape2 = bounds$shape2
+    }else{
+      uncshape2 = shape20
+    }
       xshape2 = .acdshape2bounds(modelinc[25:27], uncshape2, model$dmodel$model, dbounds[5:7])
       arglist$skhEst[3] = xshape2$sh0
       pxd = which(is.na(pars[idx["sh2cons", 1]:idx["sh2cons", 2], 5]))

@@ -19,7 +19,7 @@
 #-------------------------
 acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts = 3),
                   fit.control = list(stationarity = 0, fixed.se = 0, scale = 0,n.sim = 2000,rseed = NULL),
-                  skew0 = NULL, shape10 = NULL,shape20 = NULL, cl = NULL, ...) {
+                  skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   UseMethod("acdfit")
 }
 .arfimaxfilteracd = function(modelinc, pars, idx, data, N, arglist) {
@@ -40,9 +40,9 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     skm = double(length = T)
   }
   if(modelinc[6]>0){
-    kum = as.double(tmph[,"kum"])
+    pskm = as.double(tmph[,"pskm"])
   } else{
-    kum = double(length = T)
+    pskm = double(length = T)
   }
   res = double(length = T)
   # this routine is used for the mean residuals to initiate the recursion so we ignore arfima before
@@ -55,7 +55,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   # res is ret - condm
   if (sum(modelinc[2:6] > 0)) {
     ans = try(.C("armafilterC", model = as.integer(modelinc), pars = as.double(pars), idx = as.integer(idx - 1),
-                 hm = hm, skm = skm, kum = kum,
+                 hm = hm, skm = skm, pskm = pskm,
                  x = data, res = res,
                  zrf = zrf, constm = constm, condm = condm,  m = m, T = T, PACKAGE = "SgtAcd"), silent = TRUE)
     if (inherits(ans, "try-error")) {
@@ -85,6 +85,14 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     return(ans)
   }
 }
+.extractdata = function(data){
+    xdata = xts::as.xts(data)
+    obj = list()
+    obj$data = as.numeric(zoo::coredata(xdata))
+    obj$index = zoo::index(xdata)
+    obj$period = median(diff(zoo::index(xdata)))
+    return(obj)
+  }
 #------------------------------------
 # Model estimation routines
 #' @importFrom zoo coredata index
@@ -103,17 +111,12 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
 #------------------------------------
 .acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts =3),
                          fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 3000,rseed = NULL),
-                         skew0 = NULL, shape10 = NULL,shape20 = NULL, cl = NULL, ...) {
+                         skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   tic = Sys.time()
   vmodel = spec@model$vmodel$model
   #------------
   # Set up several default fit.control arguments
   #------------
-  if(is.null(cl)){
-    cluster = NULL
-  } else{
-    cluster = cl
-  }
   if(is.null(fit.control$rseed))
     rseed = 2706 else rseed = fit.control$rseed
   if (is.null(solver.control$trace))
@@ -139,15 +142,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   #-----------
   # Set up dataset
   #-----------
-  extractdata = function(data){
-    xdata = xts::as.xts(data)
-    obj = list()
-    obj$data = as.numeric(zoo::coredata(xdata))
-    obj$index = zoo::index(xdata)
-    obj$period = median(diff(zoo::index(xdata)))
-    return(obj)
-  }
-  xdata = extractdata(data)
+  xdata = .extractdata(data)
   if (!is.numeric(out.sample))
     stop("\nacdfit-->error: out.sample must be numeric\n")
   if (as.numeric(out.sample) < 0)
@@ -175,6 +170,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   arglist$index = index
   arglist$trace = trace
   m = model$maxOrder
+  model$modeldata$T = T = length(as.numeric(data))
   if (fit.control$scale)
     dscale = sd(data) else dscale = 1
   zdata = data/dscale
@@ -190,7 +186,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   # The temporary list arglist contains all specfications and fit arguments - to be used in estimations
   #-------------------
   # Optimization Starting Parameters Vector & Bounds
-  #--------------------s
+  #--------------------
   tmp = acdstart(ipars, arglist)
   arglist = tmp$arglist
   ipars = arglist$ipars = tmp$pars
@@ -237,7 +233,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     names(parscale) = rownames(ipars[estidx, ])
     if (modelinc[1] > 0)
       parscale["mu"] = abs(mean(zdata))
-    #if (modelinc[4] > 0)
+    #if (modelinc[7] > 0)
      # parscale["omega"] = var(zdata)
     arglist$returnType = "llh"
     #arglist$returnType = "all"
@@ -291,7 +287,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
       estidx = as.logical(ipars[, 4])
       arglist$estidx = estidx
     }
-    fit = .acdmakefitmodel(f = fun, T = n, m = m, timer = timer, convergence = convergence, message = sol$message, hess, arglist = arglist)
+    fit = .acdmakefitmodel(f = fun, T = T, m = m, timer = timer, convergence = convergence, message = sol$message, hess, arglist = arglist)
     model$modelinc[7] = modelinc[7]
     model$modeldata$data = origdata
     model$modeldata$index = origindex

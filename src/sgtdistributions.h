@@ -16,5 +16,6 @@ double qdist(const double ,const double , const double , const double , const do
 double Mr(const int, const double , const double , const double , const double);
 double skewness(const double, const double, const double, const int);
 double kurtosis(const double, const double, const double, const int);
+double Pskewness(const double, const double, const double, const int);
 #endif /* DISTRIBUTIONS_H */
 

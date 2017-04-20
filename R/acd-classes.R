@@ -1,5 +1,7 @@
 #' @exportClass ACDspec
 #' @exportClass ACDfit
+#' @exportClass ACDsim
+#' @exportClass ACDpath
 #----
 setClass("rACD", "VIRTUAL")
 #-----------
@@ -11,3 +13,13 @@ setClass("ACDspec", representation(model = "vector"), contains = "rACD")
 # contains specify the classes that ACDspec class inherit from.
 #-------------------------------------------------------------------------------
 setClass("ACDfit", representation(fit = "vector", model = "vector"), contains = "rACD")
+#-------------------------------------------------------------------------------
+setClass("ACDfilter", representation(filter = "vector", model = "vector"), contains = "rACD")
+#-------------------------------------------------------------------------------
+setClass("ACDforecast", representation(forecast = "vector", model = "vector"), contains = "rACD")
+#-------------------------------------------------------------------------------
+setClass("ACDsim", representation(simulation = "vector", model = "vector", seed = "integer"), contains = "rACD")
+#-------------------------------------------------------------------------------
+setClass("ACDpath", representation(path = "vector", model = "vector", seed = "integer"), contains = "rACD")
+#-------------------------------------------------------------------------------
+setClass("ACDroll", representation(model = "vector", forecast = "vector"), contains = "rACD")

@@ -45,7 +45,7 @@
      h[i] = h[i] + pars[idx[8]+j]*h[i-(j+1)];
    }
  }
-void armafilter(int* model, double *pars, int *idx, double h, double sk, double sh, double *x, double *res,
+void armafilter(int* model, double *pars, int *idx, double h, double sk, double ps, double *x, double *res,
                       double *zrf, double *constm, double *condm, int m, int i, int T)
 {
 /* --------------------------------------------------------------------------------
@@ -57,7 +57,9 @@ void armafilter(int* model, double *pars, int *idx, double h, double sk, double 
  * */
 	/*0 constm, 1 condm, 2 res*/
 	constm[i] = pars[0];
-
+ if(model[35]>0){
+   constm[i] += h*ps;
+ }
 	condm[i]+=constm[i];
 	//ARMA initialization
 	if(model[1]>0 || model[2]>0)
@@ -81,15 +83,15 @@ void armafilter(int* model, double *pars, int *idx, double h, double sk, double 
 	  }
 	}
 	if(model [4] >0){
-	  if(i >= model[3])
+	  if(i >= model[4])
 	  {
 	    condm[i] += pars[idx[4]] * sk;
 	  }
 	}
 	if(model [5] >0){
-	  if(i >= model[3])
+	  if(i >= model[5])
 	  {
-	    condm[i] += pars[idx[5]] * sh;
+	    condm[i] += pars[idx[5]] * ps;
 	  }
 	}
 	res[i]=x[i]-condm[i];

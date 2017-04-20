@@ -14,6 +14,9 @@
 ##   GNU General Public License for more details.
 ##
 ###############################################################
+.onUnload <- function (libpath) {
+    library.dynam.unload("SgtAcd", libpath)
+  }
 
 .acdmakefitmodel = function(f, T, m, timer, convergence, message, hess, arglist)
 {
@@ -61,7 +64,7 @@
 	fit$tempshape2 = temp$tempshape2
 	fit$skewness = temp$skewness
 	fit$kurtosis = temp$kurtosis
-
+  fit$Pskewness = temp$Pskewness
 	if(sum(ipars[,2])>0){
 		pall = ipars[estidx | as.logical(ipars[,2]==1), 1]
 		fixed = match(rownames(ipars[ipars[,2]==1, , drop = FALSE]), names(pall))

@@ -112,6 +112,29 @@ double dsgt(const double value,const double mean,const double sig,const double s
   ans =  kappa/(2 * sigma * pow(nu,(1.0/kappa)) * beta(1.0/kappa, nu) * pow((1.0 + pow(fabs(x - mu),kappa)/(nu * pow(sigma,kappa)* pow((1.0 + lambda * sgn(x - mu)),kappa))),(nu + 1/kappa)));
   return(ans);
 }
+/* double dsgt(const double value,const double mean,const double sig,const double sk,const double ku1,const double ku2)
+{
+  double x = value;
+  double mu = mean;
+  double sigma = sig;
+  double lambda = sk;
+  double kappa = ku1;
+  double nu = ku2;
+  double beta1, beta2, beta3, nuAdj, varScale, A1, A2, p, u,m,C, ans;
+  beta1 = beta(1/kappa,nu/kappa);
+  beta2 = beta(2/kappa,(nu-1)/kappa);
+  beta3 = beta(3/kappa,(nu-2)/kappa);
+  nuAdj = (nu+1)/kappa;
+  A2 = (1 + 3*pow(lambda,2)) * 1/beta1 * pow(nuAdj,2/kappa) * beta3;
+  A1 = 2 * lambda * 1/beta1 * pow(nuAdj,1/kappa) * beta2;
+  p = A1/sqrt(A2 - pow(A1,2));
+  varScale = sigma/sqrt(A2-pow(A1,2));
+  m = mu - p*sigma;
+  u = x - m;
+  C = 0.5 * kappa * pow(nuAdj,-1/kappa) * 1/varScale * 1/beta1;
+  ans = C * pow((1 + (pow(fabs(u),kappa))/(nuAdj * pow(1 + sign(u)*lambda,kappa) * pow(varScale,kappa))),(-nuAdj));
+  return(ans);
+} */
 double qsgt(const double value,const double mean,const double sig,const double sk,const double ku1,const double Rku2)
 {
   double prob = value;
@@ -388,6 +411,43 @@ double kurtosis(const double sk, const double ku1, const double ku2, const int n
     M3 = Mr(3,theta,lambda,kappa,nu);
     M4 = Mr(4,theta,lambda,kappa,nu);
     ans = M4 - 4*M3*delta +6*pow(delta,2) + 3*pow(delta,4);
+  }
+  return(ans);
+}
+double Pskewness(const double sk, const double ku1, const double ku2, const int ndis)
+{
+  double lambda = sk;
+  double kappa = ku1;
+  double nu = ku2;
+  double A, S;
+  double ans = 0.0;
+  if(ndis ==1){
+    double beta1, beta2, beta3;
+    beta1 = beta(1.0/kappa,nu/kappa);
+    beta2 = beta(2.0/kappa,(nu-1.0)/kappa);
+    beta3 = beta(3.0/kappa,(nu-2.0)/kappa);
+    A = beta2 * 1/sqrt(beta1) * 1/sqrt(beta3);
+    S = sqrt(1 + 3*pow(lambda,2) - 4 * pow(A,2) * pow(lambda,2));
+    ans = 2 * lambda * A * 1/S;
+  }
+  if(ndis == 2){
+    double gamma1, gamma2, gamma3;
+    gamma1 = gammafn(1.0/kappa);
+    gamma2 = gammafn(2.0/kappa);
+    gamma3 = gammafn(3.0/kappa);
+    A = gamma2/sqrt(gamma1 * gamma3);
+    S = sqrt(1 + 3*pow(lambda,2) - 4 * pow(A,2) * pow(lambda,2));
+    ans = 2 * lambda * A/S;
+  }
+  if(ndis == 3){
+    kappa = 2.0;
+    double beta1, beta2, beta3;
+    beta1 = beta(1.0/kappa,nu/kappa);
+    beta2 = beta(2.0/kappa,(nu-1.0)/kappa);
+    beta3 = beta(3.0/kappa,(nu-2.0)/kappa);
+    A = beta2 * 1/sqrt(beta1) * 1/sqrt(beta3);
+    S = sqrt(1 + 3*pow(lambda,2) - 4 * pow(A,2) * pow(lambda,2));
+    ans = 2 * lambda * A * 1/S;
   }
   return(ans);
 }

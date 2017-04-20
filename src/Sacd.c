@@ -104,6 +104,15 @@ double skewdynamicsT(const int *model, const int *idx, const double *pars, const
 		  if(model[17]>0) res += pars[idx[17]]*sqrt(h);
 		  break;
 		}
+	case 3:
+		{
+		  res = pars[idx[13]];
+		  res += pars[idx[14]+lag]*z;
+		  res += pars[idx[14]+lag]*pars[idx[15]+lag]*fabs(z)*z;
+		  res += pars[idx[16]+lag]*lagval;
+		  if(model[17]>0) res += pars[idx[17]]*sqrt(h);
+		  break;
+		}
 	}
 	return res;
 }
@@ -158,6 +167,14 @@ double shape1dynamics(const int *model, const int *idx, const double *pars, cons
 		    if(model[22]>0) res += pars[idx[22]]*sqrt(h);
 		    break;
 		  }
+	case 4:
+		  {
+		    res = pars[idx[18]];
+		    res += pars[idx[19]]*(1 + pars[idx[20]]*fabs(z))*z;
+		    res += pars[idx[21]]*lagval;
+		    if(model[22]>0) res += pars[idx[22]]*sqrt(h);
+		  break;
+		  }
 	}
 	return res;
 }
@@ -209,6 +226,14 @@ double shape2dynamics(const int *model, const int *idx, const double *pars, cons
     if(model[24]>lag) res+=pars[idx[24]+lag]*z1;
     if(model[25]>lag) res+=pars[idx[25]+lag]*z2;
     if(model[26]>lag) res+=pars[idx[26]+lag]*lagval;
+    if(model[27]>0) res += pars[idx[27]]*sqrt(h);
+    break;
+  }
+  case 4:
+  {
+    res = pars[idx[23]];
+    res += pars[idx[24]]*(1 + pars[idx[25]]*fabs(z))*z;
+    res += pars[idx[26]]*lagval;
     if(model[27]>0) res += pars[idx[27]]*sqrt(h);
     break;
   }

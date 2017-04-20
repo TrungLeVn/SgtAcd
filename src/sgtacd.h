@@ -16,19 +16,30 @@
 #################################################################################*/
 #ifndef SGTACD_H
 #define SGTACD_H
-void armafilterC(int *model, double *pars, int *idx, double *hm, double *skm, double *kum, double *x, double *res,
-                       double *zrf, double *constm, double *condm,
-                       int *m, int *T);
-void sacd(int *model, double *pars, int *idx, double *hEst, double *x,
-                 double *res, double *e, double *zrf,
-                 double *constm, double *condm, int *m, int *T, double *h, double *z,
-                 double *tempskew, double *tempshape1,double *tempshape2, double *skhEst, double *tskew,
-                 double *tshape1,double *tshape2, double *sbounds,
-                 double *llh, double *LHT, double *skew, double *kurt);
-void gjracd(int *model, double *pars, int *idx, double *hEst, double *x,
-                   double *res, double *e, double *nres, double *zrf,
-                   double *constm, double *condm, int *m, int *T, double *h, double *z,
-                   double *tempskew, double *tempshape1,double *tempshape2, double *skhEst, double *tskew,
-                   double *tshape1, double *tshape2, double *sbounds,
-                   double *llh, double *LHT, double *skew, double *kurt);
+ void armafilterC(int *model, double *pars, int *idx, double *hm, double *skm, double *psk, double *x, double *res,
+                  double *zrf, double *constm, double *condm,
+                  int *m, int *T);
+ void sacd(int *model, double *pars, int *idx, double *hEst, double *x,
+           double *res, double *e, double *zrf,
+           double *constm, double *condm, int *m, int *T, double *h, double *z,
+           double *tempskew, double *tempshape1,double *tempshape2, double *skhEst, double *tskew,
+           double *tshape1,double *tshape2, double *sbounds,
+           double *llh, double *LHT, double *skew, double *kurt, double *pskew);
+ void gjracd(int *model, double *pars, int *idx, double *hEst, double *x,
+             double *res, double *e, double *nres, double *zrf,
+             double *constm, double *condm, int *m, int *T, double *h, double *z,
+             double *tempskew, double *tempshape1,double *tempshape2, double *skhEst, double *tskew,
+             double *tshape1, double *tshape2, double *sbounds,
+             double *llh, double *LHT, double *skew, double *kurt, double *pskew);
+ void sacdsimC(int *model, double *pars, int *idx,double *x, double *constm, double *h, double *z,
+               double *res, double *e, double *tempskew, double *tempshape1, double *tempshape2,
+               double *tskew, double *tshape1, double *tshape2,double *sbounds,double *pskew,
+               int *T, int *m);
+ void gjracdsimC(int *model, double *pars, int *idx,double *x, double *constm, double *h, double *z,
+                 double *res, double *e, double *nres, double *tempskew, double *tempshape1, double *tempshape2,
+                 double *tskew, double *tshape1, double *tshape2,double *sbounds,double *pskew,
+                 int *T, int *m);
+
+ void meansimC(int *model, double *pars, int *idx, double *h, double *sk, double *ps, double *x, double *res,
+               double *constm, int *m, int *T);
 #endif /* SGTACD_H */

@@ -21,7 +21,7 @@
 #-----------------------------------------------------------------------------------
 
 acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
-                   mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = TRUE, skm = FALSE, kum = FALSE),
+                   mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, pskm = FALSE,adj = FALSE),
                    distribution.model = list(model = "sgt", skewOrder = c(1,0, 1),skewshock = 1, skewshocktype = 1, skewmodel = "quad",volsk = FALSE,
                                              shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad",volsh1 = FALSE,
                                              shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad",volsh2 = FALSE,exp.rate = 1),
@@ -44,28 +44,28 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
 }
 
 .acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
-                     mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, kum = FALSE),
+                     mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, pskm = FALSE,adjm = FALSE),
                      distribution.model = list(model = "sgt", skewOrder = c(1,0, 1 ),skewshock = 1, skewshocktype = 1, skewmodel = "quad", volsk = FALSE,
                                                shape1Order = c(1, 0, 1), shape1shock = 1, shape1shocktype = 1,shape1model = "quad", volsh1 = FALSE,
                                                shape2Order = c(1, 0, 1), shape2shock = 1, shape2shocktype = 1,shape2model = "quad", volsh2 = FALSE, exp.rate = 1),
                      start.pars = list(), fixed.pars = list()) {
   # specify the parameter list
-  modelinc = rep(0, 35)
-  names(modelinc) = c("mu", "ar", "ma", "archm", "skm", "kum",
+  modelinc = rep(0, 36)
+  names(modelinc) = c("mu", "ar", "ma", "archm", "skm", "pskm",
                       "omega", "alpha", "beta", "gamma",
                       "skew", "shape1", "shape2",
                       "skcons", "skalpha", "skgamma", "skbeta", "volsk",
                       "sh1cons", "sh1alpha", "sh1gamma", "sh1beta", "volsh1",
                       "sh2cons", "sh2alpha", "sh2gamma", "sh2beta", "volsh2",
                       "skewmodel", "shape1model","shape2model", "skshock", "sh1shock","sh2shock",
-                      "aux")
+                      "aux","adjMean")
 
   modeldesc = list()
 
   #-----
   # Check the input of arguments in acdspec
   #----
-  mm = match(names(mean.model), c("armaOrder", "include.mean","archm","skm","kum"))
+  mm = match(names(mean.model), c("armaOrder", "include.mean","archm","skm","pskm","adjm"))
   if (any(is.na(mm))) {
     idx = which(is.na(mm))
     enx = NULL
@@ -112,30 +112,26 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   #---------------------------------------
   # Specify the mean equation. The undefined argument will take default specifications
   #---------------------------------------
-  mmodel = list(armaOrder = c(0, 0), include.mean = TRUE, archm = FALSE, skm = FALSE, shm = FALSE)
+  mmodel = list(armaOrder = c(0, 0), include.mean = TRUE, archm = FALSE, skm = FALSE, pskm = FALSE, adjm = FALSE)
   idx = na.omit(match(names(mean.model), names(mmodel)))
   if (length(idx) > 0)
     for (i in 1:length(idx)) mmodel[idx[i]] = mean.model[i]
-  if(as.logical(mmodel$archm) || as.logical(mmodel$skm) || as.logical(mmodel$shm))
-  {
-    if(sum(mmodel$armaOrder) > 0){
-      stop("\nacdpec-->error: ARMA specification is not allowed if we allow for either archm, skm or shm.\n", call. = FALSE)
-    }
     if( as.logical(mmodel$archm) ){
       modelinc[4] = 1
     }
     if( as.logical(mmodel$skm) ){
       modelinc[5] = 1
     }
-    if( as.logical(mmodel$shm) ){
+    if( as.logical(mmodel$pskm) ){
       modelinc[6] = 1
     }
-  } else{
     modelinc[2] = mmodel$armaOrder[1]
     modelinc[3] = mmodel$armaOrder[2]
-  }
   if (is.null(mmodel$include.mean))
     modelinc[1] = 1 else modelinc[1] = as.integer(mmodel$include.mean)
+  if(as.logical(mmodel$adjm)) {
+    modelinc[36]=1
+  }
   #--------
   # Specify the higher moment equations. The undefined argument will goes with default
   #-------
@@ -154,18 +150,15 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
     stop("\nacdspec-->error: for the sged distribution, shape2 parameter is Inf.")
   if(dmodel$model == "sst" && !is.null(dmodel$shape1Order))
     stop("\nacdspec-->error: for the sst distribution, shape1 parameter is always 2.")
-  if(dmodel$model == "sged"){
-    fixed.pars = list(shape2 = 999)
-  }
-  if(dmodel$model == "sst"){
-    fixed.pars = list(shape1 = 2)
-  }
   #Skewshocktype ==1 using the squared values, else using the absolute value
   # modelinc = 0: quad with squared values
   # modelinc = 1: quad with abs values
   # modelinc = 2: pwl with squared values
+  # modelinc = 3: trans
   if (dmodel$skewmodel == "pwl") {
     modelinc[29] = 2
+  } else if(dmodel$skewmodel =="trans"){
+    modelinc[29] = 3
   } else {
     # default (quad)
     if (dmodel$skewshocktype == 1) #Skewshocktype ==1 using the squared values, else using the absolute value
@@ -176,17 +169,22 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   # modelinc = 1: quad with abs values
   # modelinc = 2: pwl with squared values
   # modelinc = 3: pwl with abs value
+  # modelinc = 4: trans
   if (dmodel$shape1model == "pwl") {
     if (dmodel$shape1shocktype == 1)
       modelinc[30] = 2 else modelinc[30] = 3
-  } else {
+  } else if(dmodel$shape1model == "trans"){
+    modelinc[30] = 4
+  }else{
     if (dmodel$shape1shocktype == 1)
       modelinc[30] = 0 else modelinc[30] = 1
   }
   if (dmodel$shape2model == "pwl") {
     if (dmodel$shape2shocktype == 1)
       modelinc[31] = 2 else modelinc[31] = 3
-  } else {
+  } else if(dmodel$shape2model == "trans"){
+    modelinc[31] = 4
+  }else{
     if (dmodel$shape2shocktype == 1)
       modelinc[31] = 0 else modelinc[31] = 1
   }
@@ -269,13 +267,13 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
       if(as.logical(dmodel$volsh1)) modelinc[23] = 1
     }
     modelinc[24:28] = 0
-    modelinc[13] = 1
+    modelinc[13] = 0
     sbounds[5] = di$shape2.LB
     sbounds[6] = di$shape2.UB
   }
   if(dmodel$model == "sst"){
     modelinc[19:22] = 0
-    modelinc[12] = 1
+    modelinc[12] = 0
     sbounds[3] = di$shape1.LB
     sbounds[4] = di$shape1.UB
     if (is.null(dmodel$shape2Order)) {
@@ -306,7 +304,7 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   pos = 1
   pos.matrix = matrix(0, ncol = 3, nrow = 28)
   colnames(pos.matrix) = c("start", "stop", "include")
-  rownames(pos.matrix) = c("mu", "ar", "ma", "archm", "skm", "kum",
+  rownames(pos.matrix) = c("mu", "ar", "ma", "archm", "skm", "pskm",
                            "omega", "alpha", "beta", "gamma",
                            "skew", "shape1","shape2",
                            "skcons", "skalpha", "skgamma", "skbeta", "volsk",
@@ -359,7 +357,7 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   colnames(pars) = c("Level", "Fixed", "Include", "Estimate", "LB", "UB")
   pidx = matrix(NA, nrow = 28, ncol = 2)
   colnames(pidx) = c("begin", "end")
-  rownames(pidx) = c("mu", "ar", "ma", "archm", "skm", "kum",
+  rownames(pidx) = c("mu", "ar", "ma", "archm", "skm", "pskm",
                      "omega", "alpha", "beta", "gamma",
                      "skew", "shape1","shape2",
                      "skcons", "skalpha", "skgamma", "skbeta", "volsk",
@@ -447,10 +445,10 @@ acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 
   if (pos.matrix[6, 3] == 1) {
     pars[nx + pn, 3] = 1
     pars[nx + pn, 1] = 0
-    if (any(!is.na(match(fixed.names, "kum"))))
+    if (any(!is.na(match(fixed.names, "pskm"))))
       pars[nx + pn, 2] = 1 else pars[nx + pn, 4] = 1
   }
-  pnames = c(pnames, "kum")
+  pnames = c(pnames, "pskm")
   pidx[6, 2] = nx + pn
 
   nx = nx + pn

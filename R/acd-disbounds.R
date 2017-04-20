@@ -182,9 +182,9 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   #par.UB[2] = exptransform2(shape2.UB * 0.999,shape2.LB,shape2.UB,inverse = TRUE)
     # alpha1 and alpha2 with lower/upper bounds
     par = c(par,0,0,0)
-    par.LB = c(par.LB, -2, -2,-0.9+.eps)
+    par.LB = c(par.LB, -2, -2,-1+.eps)
     #par.LB = c(par.LB, -2, -2,0+.eps)
-    par.UB = c(par.UB,2,2,0.9-.eps)
+    par.UB = c(par.UB,2,2,1-.eps)
   return(list(shapepars = par, shapepar.LB = par.LB, shapepar.UB = par.UB, sh0 = par[1]))
 }
 # logistic transformation and inverse transformation
@@ -201,7 +201,7 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
 }
 
 
-.exptransform2 = function(x, lower,upper, rate=1){a
+.exptransform2 = function(x, lower,upper, rate=1){
   lower+upper*exp(-rate*x)
 }
 .exptransform1 = function(x, lower, rate=1){
