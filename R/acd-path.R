@@ -63,7 +63,7 @@ Pskew = function(lambda,kappa,nu,distribution)
     }
     return(ans);
 }
-#' @export Pskew
+#' @exportMethod  Pskew
 #--------------------------------------
 # ACD Path for GJR-GARCH process
 #-------------------------------------
