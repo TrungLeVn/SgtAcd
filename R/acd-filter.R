@@ -10,12 +10,12 @@
 #' @return An ACDfiltering object
 #' @export acdfilter
 #---------------
-acdfilter = function(spec, data, out.sample = 0,  n.old = NULL, skew0 = NULL, shape0 = NULL, ...)
+acdfilter = function(spec, data, out.sample = 0,  n.old = NULL, skew0 = NULL, shape10 = NULL,shape20 = NULL, ...)
 {
   UseMethod("acdfilter")
 }
 
-.acdfilterswitch = function(spec, data, out.sample = 0,  n.old = NULL, skew0 = NULL, shape0 = NULL, ...)
+.acdfilterswitch = function(spec, data, out.sample = 0,  n.old = NULL, skew0 = NULL, shape10 = NULL,shape20 = NULL, ...)
 {
   switch(spec@model$vmodel$model,
          sGARCH = .acdfilter(spec = spec, data = data, out.sample = out.sample,
