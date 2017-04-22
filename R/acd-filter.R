@@ -19,9 +19,9 @@ acdfilter = function(spec, data, out.sample = 0,  n.old = NULL, skew0 = NULL, sh
 {
   switch(spec@model$vmodel$model,
          sGARCH = .acdfilter(spec = spec, data = data, out.sample = out.sample,
-                             n.old = n.old, skew0 = skew0, shape0 = shape0, ...),
+                             n.old = n.old, skew0 = skew0, shape10 = shape10,shape20 = shape20, ...),
          gjrGARCH = .acdfilter(spec = spec, data = data, out.sample = out.sample,
-                               n.old = n.old, skew0 = skew0, shape0 = shape0, ...))
+                               n.old = n.old, skew0 = skew0, shape10 = shape10,shape20 = shape20, ...))
 }
 setMethod("acdfilter", signature(spec = "ACDspec"), .acdfilterswitch)
 #--------------------
@@ -45,7 +45,6 @@ setMethod("acdfilter", signature(spec = "ACDspec"), .acdfilterswitch)
   origindex = xdata$index
   T = length(origdata)  - out.sample
   # T is the length of oldata or  in other words, the length of original data that is used to compute the estimated parameters.
-
   if(!is.null(n.old) && n.old>T) stop("\nn.old cannot be greater than length data - out.sample!")
 
   data = origdata[1:T]

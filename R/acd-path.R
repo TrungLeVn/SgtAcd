@@ -1,5 +1,6 @@
 #----------------------------------------------------------------------------------
 # path
+#' @importFrom sgt rsgt
 #' @export acdpath
 #' @title ACD simulated path
 #' @usage acdpath = function(spec, n.sim = 1000, n.start = 0, m.sim = 1, presigma = NA,
@@ -34,6 +35,7 @@ setMethod("acdpath", signature(spec = "ACDspec"), .acdpath)
 #----------------------------------------------------------------------------------
 # Get Pskewness for the conditional mean equation
 #----------------------------------------------------------------------------------
+#' @export  Pskew
 Pskew = function(lambda,kappa,nu,distribution)
 {
     if(distribution == "sgt"){
@@ -63,7 +65,7 @@ Pskew = function(lambda,kappa,nu,distribution)
     }
     return(ans);
 }
-#' @exportMethod  Pskew
+
 #--------------------------------------
 # ACD Path for GJR-GARCH process
 #-------------------------------------
@@ -181,7 +183,7 @@ Pskew = function(lambda,kappa,nu,distribution)
   constm = matrix(constm, ncol = m.sim, nrow = n + m)
   # TRUNG: From the simulated value of z_t, based on conditional mean, conditoinal sigma, conditional skew, conditional shape, we will start the path
   # MATRIX
-  #'  @importFrom sgt rsgt
+
   # If we do not provide preresiduals then the uncertainty will be start from n.ahead = 1
   # If we do provide the preresiduals, then the uncertainty will only start fomr n.ahead = 2
   if( !is.na(preresiduals) && !is.na(presigma) ){

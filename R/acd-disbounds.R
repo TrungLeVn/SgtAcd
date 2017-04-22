@@ -83,8 +83,8 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
     skew.LB = -0.9999
     skew.UB = 0.9999
     shape1 = 2
-    #shape1.LB = 0.5
-    shape1.LB = 1
+    shape1.LB = 0.5
+    #shape1.LB = 1
     shape1.UB = 10
     shape2 = 8
     shape2.LB = 2
@@ -97,8 +97,8 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
     skew.LB = -0.999
     skew.UB = 0.999
     shape1 = 2
-    #shape1.LB = 0.5
-    shape1.LB = 1
+    shape1.LB = 0.5
+    #shape1.LB = 1
     shape1.UB = 10
     shape2 = 999
     shape2.LB = 2
@@ -111,8 +111,8 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
     skew.LB = -0.999
     skew.UB = 0.999
     shape1 = 2
-    #shape1.LB = 0.5
-    shape1.LB = 1
+    shape1.LB = 0.5
+    #shape1.LB = 1
     shape1.UB = 10
     shape2 = 8
     shape2.LB = 2

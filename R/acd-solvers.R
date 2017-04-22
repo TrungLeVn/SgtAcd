@@ -25,13 +25,14 @@
       beta  = pars[arglist$model$pos.matrix["beta",1]:arglist$model$pos.matrix["beta",2]]
       sum(alpha+beta)
     }
+    trace = arglist$trace
     nm = names(pars)
     N = control$restarts
     if(is.null(N)) N = 1
     control$restarts = NULL
     arglist$transform = FALSE
     dopt = lapply(pars, function(x) list(mean=unname(x), sd = 2*abs(unname(x))))
-    pars = startpars(pars = pars, fun = fun, distr = rep(2, length(pars)), distr.opt = dopt,
+    pars = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(2, length(pars)), distr.opt = dopt,
                      ineqfun = ifun, ineqLB = 1e-12, ineqUB = 0.99,
                      LB = LB, UB = UB, bestN = N, n.sim = arglist$fit.control$n.sim,
                      cluster = cluster, arglist = arglist,rseed = rseed)
