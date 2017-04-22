@@ -120,7 +120,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   if(is.null(fit.control$rseed))
     rseed = 2706 else rseed = fit.control$rseed
   if (is.null(solver.control$trace))
-    trace = 0 else trace = solver.control$trace
+    trace = FALSE else trace = solver.control$trace
   if (is.null(fit.control$stationarity))
     fit.control$stationarity = FALSE
   if (is.null(fit.control$fixed.se))
@@ -187,17 +187,20 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   #-------------------
   # Optimization Starting Parameters Vector & Bounds
   #--------------------
-  tmp = acdstart(ipars, arglist)
+  tmp = acdstart(ipars, arglist,cluster)
   arglist = tmp$arglist
   ipars = arglist$ipars = tmp$pars
   arglist$model = model
   # we now split out any fixed parameters
   # estidx is the index of parameters that will be estimated
-
   estidx = as.logical(ipars[, 4])
   arglist$estidx = estidx
   arglist$fit.control = fit.control
   npars = sum(estidx)
+  if(as.logical(trace)){
+    print("Fitting stage 1: Getting starting values and parameter bounds")
+    print(ipars[estidx,])
+  }
   #if (any(ipars[, 2] == 1)) {
     #if (npars == 0) {
       #if (fit.control$fixed.se == 0) {
@@ -227,7 +230,9 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
   arglist$fit.control = fit.control
 
   fun = switch(vmodel, sGARCH = .sacdLLH, gjrGARCH = .gjracdLLH)
-
+  if(as.logical(trace)){
+    print("Fitting stage 2: Maximum Likelihood solving")
+  }
   if (use.solver) {
     parscale = rep(1, length = npars)
     names(parscale) = rownames(ipars[estidx, ])
@@ -286,6 +291,9 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
       arglist$ipars = ipars
       estidx = as.logical(ipars[, 4])
       arglist$estidx = estidx
+    }
+    if(as.logical(trace)){
+      print("Fitting stage 3: Make fit model")
     }
     fit = .acdmakefitmodel(f = fun, T = T, m = m, timer = timer, convergence = convergence, message = sol$message, hess, arglist = arglist)
     model$modelinc[7] = modelinc[7]

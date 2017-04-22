@@ -8,6 +8,7 @@ TinY = 1e-08
 # Starting parameters for mean equation using ARMA fit
 #-------
 .meqstartpars = function(pars, arglist,cluster) {
+  trace = arglist$trace
   data = zoo::zoo(arglist$data,order.by = arglist$index);
   N = length(as.numeric(unlist(data)))
   model = arglist$model
@@ -17,12 +18,12 @@ TinY = 1e-08
   # Get the estimation for ARMA specfication in mean equation.  To be used to find the starting parameters in variance equation
   if (sum(modelinc[4:6]) > 0){
     tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, pskm = FALSE),
-                       variance.model = list(model = model$vmodel$model,garchOrder = c(modelinc[8],modelinc[9])),
+                      variance.model = list(model = model$vmodel$model,garchOrder = c(modelinc[8],modelinc[9])),
                        distribution.model = list(model = model$dmodel$model,
                                                  skewOrder = model$dmodel$skewOrder,skewmodel = model$dmodel$skewmodel, skewshock = model$dmodel$skewshock,skewshocktype = model$dmodel$skewshocktype,volsk = FALSE,
                                                  shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,volsh1 = FALSE,
                                                  shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype,volsh2 = FALSE))
-    print("First round of fitting")
+    if(as.logical(trace)){print("Now fitting model with normal mean equation")}
     tempfit = .acdfit(tempspec,data = data,cluster = cluster)
     if(tempfit@fit$convergence!=0){
       tempfit = acdfit(tempspec, data = data,solver = "mssolnp")
@@ -30,8 +31,12 @@ TinY = 1e-08
         stop("\nacdfit-->error: could not find appropriate starting values for recursion\n")
       }
     }
+    if(as.logical(trace)){
+      cat("\n Initial parameters estimations are:\n")
+      print(round(tempfit@fit$robust.matcoef,6), digits = 5)
+    }
     tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,pskm = tempfit@fit$Pskewness)
-    mexdata = NULL
+     mexdata = NULL
     if(modelinc[4] > 0){
      mexdata = cbind(mexdata,archm = tmph[,"archm"])
     }
@@ -89,7 +94,7 @@ TinY = 1e-08
         pars[idx["pskm", 1]:idx["pskm", 2], 1] = fit.mean["pskm"]
       }
     }
-   } else if(sum(modelinc[2:3])>0&&sum(modelinc[4:6])==0){
+ }else if(sum(modelinc[2:3])>0&&sum(modelinc[4:6])==0){
      ttemp = arima(data, order = c(modelinc[2], 0, modelinc[3]), include.mean = modelinc[1], method = "CSS")
      fit.mean = ttemp$coef
      if (modelinc[1] > 0) {
@@ -103,7 +108,7 @@ TinY = 1e-08
       }
      } else {
      pars[idx["mu", 1]:idx["mu", 2], 1] = 0
-   }
+     }
   arglist$tmph = tmph
   return(list(pars = pars, arglist = arglist))
 }
@@ -228,6 +233,7 @@ TinY = 1e-08
 # starting parameters w.r.t model specification, getting from the GARCH fit
 #-----
 acdstart = function(pars, arglist,cluster) {
+  trace = arglist$trace
   tmp = .meqstartpars(pars, arglist,cluster)
   pars = tmp$pars
   arglist = tmp$arglist
@@ -244,8 +250,6 @@ acdstart = function(pars, arglist,cluster) {
   shape20 = arglist$shape20
   skew0 = arglist$skew0
   data = arglist$data
-  garchenv = arglist$garchenv
-  assign("garchLL", NA, envir = garchenv)
   dbounds = arglist$sbounds
   bounds = .DistributionBounds(model$dmodel$model)
   numdispar = sum(modelinc[c(14,19,24)])
@@ -334,12 +338,37 @@ acdstart = function(pars, arglist,cluster) {
         pars[idx["shape2", 1]:idx["shape2", 2], 6] = NA
       }
   }
-  if (modelinc[14] > 0) {
-    if(is.null(skew0)){
-      uncskew = bounds$skew
-    }else{
-      uncskew = skew0
+  garchenv = arglist$garchenv
+  assign("garchLL", NA, envir = garchenv)
+  #Only make initial GARCH-type model estimation if we have time-varying higher moment parameters
+  if(sum(modelinc[c(14,19,24)])>0){
+    data = zoo::zoo(arglist$data,order.by = arglist$index);
+    tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, pskm = FALSE,adjm = model$mmodel$adjm),
+                       variance.model = list(model = model$vmodel$model,garchOrder = c(modelinc[8],modelinc[9])),
+                       distribution.model = list(model = model$dmodel$model,
+                                                 skewOrder = NULL,
+                                                 shape1Order = NULL,
+                                                 shape2Order = NULL))
+    if(as.logical(trace)){print("First round of fitting: GARCH-type model")}
+    tempfit = .acdfit(tempspec,data = data,cluster = cluster)
+    if(tempfit@fit$convergence!=0){
+      tempfit = acdfit(tempspec, data = data,solver = "mssolnp")
+      if(tempfit@fit$convergence!=0){
+        stop("\nacdfit-->error: could not find appropriate starting values for recursion\n")
+      }
     }
+    if(as.logical(trace)){
+      cat("\n GARCH parameters estimations are:\n")
+      print(round(tempfit@fit$robust.matcoef,6), digits = 5)
+    }
+    garchLL = likelihood(tempfit)
+    assign("garchLL", garchLL, envir = garchenv)
+    if(is.null(skew0)) skew0 = tempfit@fit$coef["skew"]
+    if(is.null(shape10)) shape10 = tempfit@fit$coef["shape1"]
+    if(is.null(shape20)) shape20 = tempfit@fit$coef["shape2"]
+  }
+  if (modelinc[14] > 0) {
+    uncskew = skew0
     xskew = .acdskewbounds(modelinc[15:17], uncskew, model$dmodel$model, dbounds[1:2])
     arglist$skhEst[1] = xskew$sk0
     if (is.na(pars[idx["skcons", 1]:idx["skcons", 2], 5]))
@@ -407,11 +436,7 @@ acdstart = function(pars, arglist,cluster) {
   }
 }
   if (modelinc[19] > 0) {
-    if(is.null(shape10)){
-      uncshape1 = bounds$shape1
-    }else{
-      uncshape1 = shape10
-    }
+    uncshape1 = shape10
     xshape1 = .acdshape1bounds(modelinc[20:22], uncshape1, model$dmodel$model, dbounds[c(3,4,7)])
     arglist$skhEst[2] = xshape1$sh0
     pxd = which(is.na(pars[idx["sh1cons", 1]:idx["sh1cons", 2], 5]))
@@ -482,11 +507,7 @@ acdstart = function(pars, arglist,cluster) {
 }
 }
   if (modelinc[24] > 0) {
-    if(is.null(shape20)){
-      uncshape2 = bounds$shape2
-    }else{
       uncshape2 = shape20
-    }
       xshape2 = .acdshape2bounds(modelinc[25:27], uncshape2, model$dmodel$model, dbounds[5:7])
       arglist$skhEst[3] = xshape2$sh0
       pxd = which(is.na(pars[idx["sh2cons", 1]:idx["sh2cons", 2], 5]))
