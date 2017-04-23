@@ -341,7 +341,7 @@ acdstart = function(pars, arglist,cluster) {
   garchenv = arglist$garchenv
   assign("garchLL", NA, envir = garchenv)
   #Only make initial GARCH-type model estimation if we have time-varying higher moment parameters
-  if(sum(modelinc[c(14,19,24)])>0){
+  if(sum(modelinc[c(14,19,24)])>0&&is.null(skew0)&&is.null(shape10)&&is.null(shape20)){
     data = zoo::zoo(arglist$data,order.by = arglist$index);
     tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, pskm = FALSE,adjm = model$mmodel$adjm),
                        variance.model = list(model = model$vmodel$model,garchOrder = c(modelinc[8],modelinc[9])),
@@ -363,9 +363,9 @@ acdstart = function(pars, arglist,cluster) {
     }
     garchLL = likelihood(tempfit)
     assign("garchLL", garchLL, envir = garchenv)
-    if(is.null(skew0)) skew0 = tempfit@fit$coef["skew"]
-    if(is.null(shape10)) shape10 = tempfit@fit$coef["shape1"]
-    if(is.null(shape20)) shape20 = tempfit@fit$coef["shape2"]
+    skew0 = tempfit@fit$coef["skew"]
+    shape10 = tempfit@fit$coef["shape1"]
+    shape20 = tempfit@fit$coef["shape2"]
   }
   if (modelinc[14] > 0) {
     uncskew = skew0

@@ -46,7 +46,6 @@ setMethod("acdfilter", signature(spec = "ACDspec"), .acdfilterswitch)
   T = length(origdata)  - out.sample
   # T is the length of oldata or  in other words, the length of original data that is used to compute the estimated parameters.
   if(!is.null(n.old) && n.old>T) stop("\nn.old cannot be greater than length data - out.sample!")
-
   data = origdata[1:T]
   index = origindex[1:T]
   model = spec@model
@@ -98,8 +97,11 @@ setMethod("acdfilter", signature(spec = "ACDspec"), .acdfilterswitch)
   } else{
     if(modelinc[14]==1) arglist$skhEst[1] = pars["skcons"] #modelinc[21] is skcons
   }
-
-  arglist$tmph  = 0
+  if(sum(modelinc[4:6])>0){
+    arglist$tmph  = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,pskm = tempfit@fit$Pskewness)
+  } else{
+    arglist$tmph = 0
+  }
   arglist$model = model
   # we now split out any fixed parameters
   estidx = as.logical( ipars[,3] )

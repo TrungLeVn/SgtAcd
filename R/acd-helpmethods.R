@@ -594,12 +594,19 @@ setMethod("infocriteria", signature(object = "ACDfit"), .acdinfocriteria)
 setMethod("show",
           signature(object = "ACDspec"),
           function(object){
+            mmodel = object@model$mmodel
             vmodel = object@model$vmodel$model
             model = object@model
             modelinc = object@model$modelinc
             cat(paste("\n*---------------------------------*", sep = ""))
             cat(paste("\n*          ACD Model Spec         *", sep = ""))
             cat(paste("\n*---------------------------------*", sep = ""))
+            cat("\n\nConditional mean Dynamics \t")
+            cat(paste("\n-----------------------------------", sep = ""))
+            cat(paste("\nARMA Order\t:","(",modelinc[2],",",modelinc[3],")",sep=""))
+            cat(paste("\nGARCH-in-mean effect\t:",as.logical(modelinc[4]),sep = ""))
+            cat(paste("\nSkew-in-mean effect\t:",as.logical(modelinc[6]),sep = ""))
+            cat(paste("\nAdjust conditional mean\t:",as.logical(modelinc[36]),sep= ""))
             cat("\n\nConditional Variance Dynamics \t")
             cat(paste("\n-----------------------------------", sep = ""))
             cat(paste("\nGARCH Model\t: ", vmodel,"(", modelinc[8], ",", modelinc[9], ")\n", sep=""))
@@ -646,6 +653,7 @@ setMethod("show",
               cat(paste("fGARCH Sub-Model\t: ", model$vmodel$vsubmodel, "\n", sep = ""))
             }
             cat("Mean Model\t: ARFIMA(", modelinc[2],",",",",modelinc[3],")\n", sep = "")
+            cat("Adjust mean\t:", as.logical(modelinc[36]),"\n",sep = "")
             cat("Distribution\t:", model$dmodel$model,"\n")
             if(sum(object@model$dmodel$skewOrder)>0){
               cat("\nConditional Skew Dynamics \t")
