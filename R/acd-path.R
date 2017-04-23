@@ -4,9 +4,11 @@
 #' @export acdpath
 #' @title ACD simulated path
 #' @usage acdpath = function(spec, n.sim = 1000, n.start = 0, m.sim = 1, presigma = NA,
-#'        prereturns = NA, preresiduals = NA, preskew = NA, preshape = NA, rseed = NA,
+#'        prereturns = NA, preresiduals = NA, preskew = NA, preshape1 = NA, preshape2 = NA, rseed = NA,
 #'        cluster = NULL, ...)
 #' @param spec A spec object with fixed parameters
+#' @param n.sim The path horizon.
+#' @param n.start Number of burn-in period for simulated path.
 #' @param pre.. Must be supplied. The values of returns, residuals, skew, shape that will be used to start the simulation process
 #' @return A ACDpath object that will be a simulated process for an ACD process.
 #---------------------------------------------------------------------
@@ -98,7 +100,7 @@ Pskew = function(lambda,kappa,nu,distribution)
     prereturns = as.vector(prereturns)
     if(length(prereturns)<m) stop(paste("\nuacdsim-->error: prereturns must be of length ", m, sep=""))
   } else{
-    prereturns = as.numeric(tail(data, m))
+    stop("\nacdpath-->error: prereturns cannot be NA.")
   }
   if(!is.na(preresiduals[1])){
     preresiduals = as.vector(preresiduals)
@@ -179,7 +181,11 @@ Pskew = function(lambda,kappa,nu,distribution)
   constmean = ipars[idx["mu",1]:idx["mu",2], 1]
   # Taking into account the initial m periods with prePskew and Presigma. From m+1, the varying part in conditional mean
   # depends on varying Pskew and Sigma
-  constm = c(rep(constmean+prePskew*presigma,m),rep(constmean,n))
+  if(modelinc[36]>0){
+    constm = c(rep(constmean+prePskew*presigma,m),rep(constmean,n))
+  } else{
+    constm = c(rep(constmean,n+m))
+  }
   constm = matrix(constm, ncol = m.sim, nrow = n + m)
   # TRUNG: From the simulated value of z_t, based on conditional mean, conditoinal sigma, conditional skew, conditional shape, we will start the path
   # MATRIX
@@ -202,7 +208,7 @@ Pskew = function(lambda,kappa,nu,distribution)
       } else if(distribution == "sged"){
         z[k,] = sgt::rsgt(n = m.sim,lambda = tskew[k],p = tshape1[k],q = Inf)
       } else {
-        z[k,] = sgt::rsgt(n = m.sim,lambda = tskew[k],p = 2, q = tshape2[k]/tshape1[k])
+        z[k,] = sgt::rsgt(n = m.sim,lambda = tskew[k],p = 2, q = tshape2[k]/2)
       }
     }
   }
@@ -410,7 +416,11 @@ Pskew = function(lambda,kappa,nu,distribution)
   constmean = ipars[idx["mu",1]:idx["mu",2], 1]
   # Taking into account the initial m periods with prePskew and Presigma. From m+1, the varying part in conditional mean
   # depends on varying Pskew and Sigma
-  constm = c(rep(constmean+prePskew*presigma,m),rep(constmean,n))
+  if(modelinc[36]>0){
+    constm = c(rep(constmean+prePskew*presigma,m),rep(constmean,n))
+  } else{
+    constm = c(rep(constmean,n+m))
+  }
   constm = matrix(constm, ncol = m.sim, nrow = n + m)
   # TRUNG: From the simulated value of z_t, based on conditional mean, conditoinal sigma, conditional skew, conditional shape, we will start the path
   # MATRIX

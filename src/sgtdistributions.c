@@ -86,7 +86,6 @@ double rsged(const double mean,const double sig, const double sk, const double k
   double kappa = ku;
   double z, ans;
   z = runif(0.0,1.0);
-  Rprintf("value of z %f\n",z);
   ans = qsged(z,mu,sigma,lambda,kappa);
   return(ans);
 }
@@ -195,7 +194,6 @@ double rsgt(const double mean,const double sig,const double sk,const double ku1,
   double nu = Rku2;
   double z,ans;
   z = runif(0.0,1.0);
-  Rprintf("value of z is %f\n",z);
   ans = qsgt(z,mu,sigma,lambda,kappa,nu);
   return(ans);
 }
