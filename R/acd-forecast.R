@@ -45,15 +45,15 @@ setMethod("acdforecast", signature(fitORspec = "ACDspec"), .acdforecastSpec)
   if(is.na(rseed[1])){
     sseed = 2706:(2706+m.sim-1)
   } else{
-    if(length(rseed) != m.sim) stop("\uacdsim-->error: rseed must be of length m.sim!\n")
+    if(length(rseed) != m.sim) stop("\uacdforecast-->error: rseed must be of length m.sim!\n")
     sseed = rseed[1:m.sim]
   }
   data = fit@model$modeldata$data
-  Nor = length(as.numeric(data))
+  Nor = length(fit@model$modeldata$data)
   index = fit@model$modeldata$index
   period = fit@model$modeldata$period
   ns = fit@model$n.start ##ns is the number of periods before the end of dataset that is used to fit the model
-  if(n.roll>0 && ns ==0) stop("\uacdsim-->error: Rolling forecast is only available when we have out-of-sample data!\n")
+  if(n.roll>0 && ns ==0) stop("\uacdforecast-->error: Rolling forecast is only available when we have out-of-sample data!\n")
   N = Nor - ns #N is the length of data that is used to fit model or data[N] is the last point of fitted data
   model = fit@model
   ipars = fit@fit$ipars
@@ -72,7 +72,7 @@ setMethod("acdforecast", signature(fitORspec = "ACDspec"), .acdforecastSpec)
                                         variance.targeting = FALSE),
                   mean.model = list(armaOrder = model$mmodel$armaOrder,
                                     include.mean = model$mmodel$include.mean,
-                                    archm = model$mmodel$archm, skm = model$mmodel$skm, pskm = model$mmodel$pskm),
+                                    archm = model$mmodel$archm, skm = model$mmodel$skm, pskm = model$mmodel$pskm, adjm = model$mmodel$adjm),
                   distribution.model = list(model = model$dmodel$model,
                                             skewOrder = model$dmodel$skewOrder, skewshock = model$dmodel$skewshock,
                                             skewmodel = model$dmodel$skewmodel, volsk = model$dmodel$volsk,
@@ -82,7 +82,7 @@ setMethod("acdforecast", signature(fitORspec = "ACDspec"), .acdforecastSpec)
                                             shape2model = model$dmodel$shape2model, volsh2 = model$dmodel$volsh2,
                                             exp.rate=model$sbounds[7]))
   fspec = setfixedacd(fspec, as.list(coefacd(fit)))
-  fspec = setboundsacd(fspec,list(shape = fit@model$sbounds[3:4], skew = fit@model$sbounds[1:2]))
+  fspec = setboundsacd(fspec,list(shape1 = fit@model$sbounds[3:4],shape2 = fit@model$sbounds[5:6], skew = fit@model$sbounds[1:2]))
   flt = acdfilter(spec = fspec, data = tmp, n.old = N, skew0 = fit@fit$tskew[1], shape0 = fit@fit$tshape[1])
   sigmafilter 	= flt@filter$sigma
   resfilter 		= flt@filter$residuals
