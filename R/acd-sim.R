@@ -59,7 +59,7 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   n = n.sim + n.start
   model = fit@model
   if(is.na(endpoint)){
-    endpoint = length(model$modeldata$data)
+    endpoint = model$modeldata$T
   }
   modelinc = model$modelinc
   idx = model$pidx
@@ -71,7 +71,7 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
 
   if(!is.na(presigma[1])){
     presigma = as.vector(presigma)
-    if(length(presigma)<m) stop(paste("\nacdpath-->error: presigma must be of length ", m, sep=""))
+    if(length(presigma)<m) stop(paste("\nacdsim-->error: presigma must be of length ", m, sep=""))
   } else{
     presigma = as.vector(tail(as.numeric(sigmaAcd(fit)[1:endpoint]), m))
   }
@@ -163,17 +163,16 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   constmean = ipars[idx["mu",1]:idx["mu",2], 1]
   # Taking into account the initial m periods with prePskew and Presigma. From m+1, the varying part in conditional mean
   # depends on varying Pskew and Sigma
-  constm = c(rep(constmean + prePskew*presigma,m),rep(constmean,n))
+  if(modelinc[36]>0){
+    constm = c(rep(constmean+prePskew*presigma,m),rep(constmean,n))
+  } else{
+    constm = c(rep(constmean,n+m))
+  }
   constm = matrix(constm, ncol = m.sim, nrow = n + m)
   # MATRIX
   zz = preres[1:m]/presigma[1:m]
   for(j in 1:m.sim){
     z[1:m, j] = zz
-  }
-
-  if(is.na(preresiduals[1])){
-    preres = z[1:m, , drop = FALSE]*matrix(presigma, ncol = m.sim, nrow = m)
-    #preres = z[1:m, , drop = FALSE] * presigma
   }
   pre_nres = matrix(NA,ncol = m.sim,nrow = m)
   for(i in 1:m){
@@ -382,16 +381,16 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   constmean = ipars[idx["mu",1]:idx["mu",2], 1]
   # Taking into account the initial m periods with prePskew and Presigma. From m+1, the varying part in conditional mean
   # depends on varying Pskew and Sigma
-  constm = c(rep(constmean + prePskew*presigma,m),rep(constmean,n))
+  if(modelinc[36]>0){
+    constm = c(rep(constmean+prePskew*presigma,m),rep(constmean,n))
+  } else{
+    constm = c(rep(constmean,n+m))
+  }
   constm = matrix(constm, ncol = m.sim, nrow = n + m)
   # MATRIX
   zz = preres[1:m]/presigma[1:m]
   for(j in 1:m.sim){
     z[1:m, j] = zz
-  }
-  if(is.na(preresiduals[1])){
-    preres = z[1:m, , drop = FALSE]*matrix(presigma, ncol = m.sim, nrow = m)
-    #preres = z[1:m, , drop = FALSE] * presigma
   }
   res = rbind( preres, matrix(0, ncol = m.sim, nrow = n) )
   # outpus matrices
