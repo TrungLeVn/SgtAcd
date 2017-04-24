@@ -361,7 +361,7 @@ acdstart = function(pars, arglist,cluster) {
       cat("\n GARCH parameters estimations are:\n")
       print(round(tempfit@fit$robust.matcoef,6), digits = 5)
     }
-    garchLL = likelihood(tempfit)
+    garchLL = tempfit@fit$LLH
     assign("garchLL", garchLL, envir = garchenv)
     skew0 = tempfit@fit$coef["skew"]
     shape10 = tempfit@fit$coef["shape1"]
