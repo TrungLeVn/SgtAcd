@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------
 # path
-#' @importFrom sgt rsgt
+#' @importFrom sgt rsgt dsgt qsgt psgt
 #' @export acdpath
 #' @title ACD simulated path
 #' @usage acdpath = function(spec, n.sim = 1000, n.start = 0, m.sim = 1, presigma = NA,
