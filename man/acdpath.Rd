@@ -5,11 +5,15 @@
 \title{ACD simulated path}
 \usage{
 acdpath = function(spec, n.sim = 1000, n.start = 0, m.sim = 1, presigma = NA,
-       prereturns = NA, preresiduals = NA, preskew = NA, preshape = NA, rseed = NA,
+       prereturns = NA, preresiduals = NA, preskew = NA, preshape1 = NA, preshape2 = NA, rseed = NA,
        cluster = NULL, ...)
 }
 \arguments{
 \item{spec}{A spec object with fixed parameters}
+
+\item{n.sim}{The path horizon.}
+
+\item{n.start}{Number of burn-in period for simulated path.}
 
 \item{pre..}{Must be supplied. The values of returns, residuals, skew, shape that will be used to start the simulation process}
 }
