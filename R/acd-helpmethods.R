@@ -161,8 +161,35 @@ setboundsacd <- function(object,value){
   return(object)
 }
 setMethod(f="setboundsacd", signature= c(object = "ACDspec", value = "vector"), definition = .acdsetbounds)
-#----
+#----------------------------------------------------------------
+# Convergence check method
+#-----------------------------------------------------------------
+# convergence method
+#' @exportMethod acdconvergence
+acdconvergence = function(object){
+  UseMethod("acdconvergence")
+}
+.acdconvergence = function(object)
+{
+  return( object@fit$convergence )
+}
+setMethod("acdconvergence", signature(object = "ACDfit"),  .acdconvergence)
+
+.acdconvergenceroll = function(object){
+  nonc = object@model$noncidx
+  if(is.null(nonc)){
+    ans = 0
+  } else{
+    ans = 1
+    attr(ans, 'nonconverged')<-nonc
+  }
+  return(ans)
+}
+
+setMethod("acdconvergence", signature(object = "ACDroll"),  definition = .acdconvergenceroll)
+#-----------------------------------------------------------------
 # conditional mean (fitted method)
+#-----------------------------------------------------------------
 fittedAcd <- function(object)
 {
   UseMethod("fittedAcd")
@@ -545,6 +572,10 @@ setMethod("Pskewness", signature(object = "ACDfilter"), .acdPskew)
 #' @exportMethod Pskewness
 #-------------------------------------------------------------------------------
 # likelihood method
+#' @exportMethod acdlikelihood
+acdlikelihood = function(object){
+  UseMethod("acdlikelihood")
+}
 .acdfitLikelihood = function(object)
 {
   if(is(object, "ACDfit")){
@@ -560,9 +591,8 @@ setMethod("Pskewness", signature(object = "ACDfilter"), .acdPskew)
   }
 }
 
-setMethod("likelihood", signature(object = "ACDfit"), .acdfitLikelihood)
-setMethod("likelihood", signature(object = "ACDfilter"), .acdfitLikelihood)
-#' @exportMethod likelihood
+setMethod("acdlikelihood", signature(object = "ACDfit"), .acdfitLikelihood)
+setMethod("acdlikelihood", signature(object = "ACDfilter"), .acdfitLikelihood)
 #------
 # infocriteria method
 .acdinfocriteria = function(object)
@@ -573,16 +603,23 @@ setMethod("likelihood", signature(object = "ACDfilter"), .acdfitLikelihood)
     acdnp = 0
   } else{
     acdnp = sum(object@fit$ipars[,4])
+    garchnp = sum(object@fit$ipars[1:13,4])
   }
-  acditest = rugarch:::.information.test(likelihood(object)[1], nObs = length(fittedAcd(object)),
+  acditest = rugarch:::.information.test(acdlikelihood(object)[1], nObs = length(fittedAcd(object)),
                                          nPars = acdnp)
-  itestm = matrix(0, ncol = 1, nrow = 4)
+  garchitest = rugarch:::.information.test(acdlikelihood(object)[2], nObs = length(fittedAcd(object)),
+                                           nPars = garchnp)
+  itestm = matrix(0, ncol = 2, nrow = 4)
   itestm[1,1] = acditest$AIC
   itestm[2,1] = acditest$BIC
   itestm[3,1] = acditest$SIC
   itestm[4,1] = acditest$HQIC
 
-  colnames(itestm) = c("ACD")
+  itestm[1,2] = garchitest$AIC
+  itestm[2,2] = garchitest$BIC
+  itestm[3,2] = garchitest$SIC
+  itestm[4,2] = garchitest$HQIC
+  colnames(itestm) = c("ACD", "GARCH")
   rownames(itestm) = c("Akaike", "Bayes", "Shibata", "Hannan-Quinn")
   return(itestm)
 }
