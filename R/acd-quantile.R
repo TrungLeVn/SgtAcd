@@ -26,9 +26,12 @@ acdquantile <- function(x, probs = c(0.01,0.05)){
     tshape1 = shape1(x)
     tshape2 = shape2(x)
     Q = matrix(NA, nrow = length(sig), ncol = length(probs))
-    for(i in seq_along(probs))
-    quant = qsgt(probs[i],lambda = tskew,p = tshape1,q = tshape2)
+    for(i in seq_along(probs)){
+      if(d == "sgt") quant = qsgt(probs[i],lambda = tskew,p = tshape1,q = tshape2/tshape1)
+      if(d == "sged") quant = qsgt(probs[i],lambda = tskew,p = tshape1)
+      if(d == "sst") quant = qsgt(probs[i],lambda = tskew,p = 2,q = tshape2/2)
       Q[,i] = mu + sig*quant
+    }
     colnames(Q) = paste("q[", probs,"]", sep="")
     Q = xts(Q, index(sig))
   }
