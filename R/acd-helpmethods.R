@@ -59,7 +59,7 @@ setfixedacd = function(object, value){
                  distribution.model = dmodel, start.pars  = model$start.pars,
                  fixed.pars = as.list(fixed.pars))
   tmp@model$pars[tmp@model$pars[,2]==0,5:6] = object@model$pars[tmp@model$pars[,2]==0,5:6]
-  tmp <- setboundsacd(tmp,list(shape=object@model$sbounds[3:4], skew = object@model$sbounds[1:2]))
+  tmp <- setboundsacd(tmp,list(shape1=object@model$sbounds[3:4],shape2 = object@model$sbounds[5:6], skew = object@model$sbounds[1:2]))
   return(tmp)
 }
 setMethod(f="setfixedacd", signature= c(object = "ACDspec", value = "vector"), definition = .setfixedacd)
@@ -101,7 +101,7 @@ setstartacd <- function(object,value){
                  distribution.model = dmodel, fixed.pars  = model$fixed.pars,
                  start.pars = as.list(start.pars))
   tmp@model$pars[tmp@model$pars[,2]==0,5:6] = object@model$pars[tmp@model$pars[,2]==0,5:6]
-  tmp = setboundsacd(tmp,object = list(skew=object@model$sbounds[1:2], shape1 = object@model$sbounds[3:4],shape2 = object@model$sbounds[5,6]))
+  tmp = setboundsacd(tmp,value = list(skew=object@model$sbounds[1:2], shape1 = object@model$sbounds[3:4],shape2 = object@model$sbounds[5:6]))
   return(tmp)
 }
 
@@ -210,6 +210,7 @@ fittedAcd <- function(object)
                },
                ACDpath ={
                  ans = object@path$seriesSim
+                 colnames(ans) = paste("Sim",1:object@simulation$m.sim,sep ="")
                  rownames(ans) = paste("T+",1:NROW(object@path$seriesSim), sep="")
                  return(ans)
                },
@@ -263,6 +264,7 @@ sigmaAcd <- function(object)
                ACDforecast = object@forecast$sigmaFor,
                ACDsim = {
                  ans = object@simulation$sigmaSim
+                 colnames(ans) = paste("Sim",1:object@simulation$m.sim,sep ="")
                  rownames(ans) = paste("T+",1:NROW(object@simulation$sigmaSim), sep="")
                  return(ans)
                },
@@ -461,9 +463,9 @@ setMethod("shape2", signature(object = "ACDroll"), .acdshape2)
 #' @exportMethod shape2
 #-------------------------------------------------------------------------------
 # conditional skewness
-skewness = function(object, ...)
+acdskewness = function(object, ...)
 {
-  UseMethod("skewness")
+  UseMethod("acdskewness")
 }
 
 .acdskewness = function(object, ...)
@@ -488,18 +490,18 @@ skewness = function(object, ...)
   return(S)
 }
 
-setMethod("skewness", signature(object = "ACDfit"), .acdskewness)
-setMethod("skewness", signature(object = "ACDfilter"), .acdskewness)
+setMethod("acdskewness", signature(object = "ACDfit"), .acdskewness)
+setMethod("acdskewness", signature(object = "ACDfilter"), .acdskewness)
 #setMethod("skewness", signature(object = "ACDforecast"), .acdskewness)
 #setMethod("skewness", signature(object = "ACDpath"), .acdskewness)
 #setMethod("skewness", signature(object = "ACDsim"), .acdskewness)
-setMethod("skewness", signature(object = "ACDroll"), .acdskewness)
-#' @exportMethod skewness
+setMethod("acdskewness", signature(object = "ACDroll"), .acdskewness)
+#' @exportMethod acdskewness
 #-------------------------------------------------------------------------------
-# conditional excess kurtosis
-kurtosis = function(object, ...)
+# conditional excess acdkurtosis
+acdkurtosis = function(object, ...)
 {
-  UseMethod("kurtosis")
+  UseMethod("acdkurtosis")
 }
 
 .acdkurtosis = function(object, ...)
@@ -524,13 +526,13 @@ kurtosis = function(object, ...)
   return(S)
 }
 
-setMethod("kurtosis", signature(object = "ACDfit"), .acdkurtosis)
-setMethod("kurtosis", signature(object = "ACDfilter"), .acdkurtosis)
+setMethod("acdkurtosis", signature(object = "ACDfit"), .acdkurtosis)
+setMethod("acdkurtosis", signature(object = "ACDfilter"), .acdkurtosis)
 #setMethod("kurtosis", signature(object = "ACDforecast"), .acdkurtosis)
 #setMethod("kurtosis", signature(object = "ACDpath"), .acdkurtosis)
 #setMethod("kurtosis", signature(object = "ACDsim"), .acdkurtosis)
-setMethod("kurtosis", signature(object = "ACDroll"), .acdkurtosis)
-#' @exportMethod kurtosis
+setMethod("acdkurtosis", signature(object = "ACDroll"), .acdkurtosis)
+#' @exportMethod acdkurtosis
 #-------------------------------------------------------------------------------
 # conditional Pskew
 Pskewness = function(object, ...)

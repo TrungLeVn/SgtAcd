@@ -145,7 +145,7 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   # acdOrder
   par = c(par,0.1,0.1,0.5)
   par.LB = c(par.LB, -1, -1,0+.eps)
-  par.UB = c(par.UB,1,1,0.9-.eps)
+  par.UB = c(par.UB,1,1,1-.eps)
   return(list(skewpars = par, skewpar.LB = par.LB, skewpar.UB = par.UB, sk0 = par[1]))
 }
 .acdshape1bounds = function(acdOrder, unconpar, distribution, dbounds) {
@@ -164,7 +164,7 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   par = c(par,0,0,0.5)
   par.LB = c(par.LB, -1, -1,0+.eps)
   #par.LB = c(par.LB, -1, -1,0+.eps)
-  par.UB = c(par.UB,1,1,0.9-.eps)
+  par.UB = c(par.UB,1,1,1-.eps)
   return(list(shapepars = par, shapepar.LB = par.LB, shapepar.UB = par.UB, sh0 = par[1]))
 }
 .acdshape2bounds = function(acdOrder, unconpar, distribution, dbounds) {

@@ -2,6 +2,7 @@
 #' @exportClass ACDfit
 #' @exportClass ACDsim
 #' @exportClass ACDpath
+#' @exportClass ACDroll
 #----
 setClass("rACD", "VIRTUAL")
 #-----------

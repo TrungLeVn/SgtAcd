@@ -147,6 +147,7 @@ Pskew = function(lambda,kappa,nu,distribution)
   }
   if(model$modelinc[12]>0){
     tshape1 = rep(ipars["shape1", 1], n+m)
+    pretshape1 = head(tshape1,m)
   } else{
     tshape1 = c(pretshape1, rep(0, n))
   }
@@ -166,6 +167,7 @@ Pskew = function(lambda,kappa,nu,distribution)
   }
   if(model$modelinc[13]>0){
     tshape2 = rep(ipars["shape2", 1], n+m)
+    pretshape2 = head(tshape2,m)
   } else{
     tshape2 = c(pretshape2, rep(0, n))
   }

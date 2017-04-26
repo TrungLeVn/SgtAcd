@@ -17,7 +17,7 @@
 #' @return An ACDfit object which contains information about model estimation
 #' @export acdfit
 #-------------------------
-acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts = 3,trace = TRUE),
+acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(),
                   fit.control = list(stationarity = 0, fixed.se = 0, scale = 0,n.sim = 5000,rseed = NULL),
                   skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   UseMethod("acdfit")
@@ -109,7 +109,7 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
 #' @export acdfit
 #' @useDynLib SgtAcd
 #------------------------------------
-.acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(restarts =3,trace = TRUE),
+.acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.control = list(),
                          fit.control = list(stationarity = 0, fixed.se = 0,scale = 0, n.sim = 5000,rseed = NULL),
                          skew0 = NULL, shape10 = NULL,shape20 = NULL, cluster = NULL, ...) {
   tic = Sys.time()
@@ -121,6 +121,8 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     rseed = 2706 else rseed = fit.control$rseed
   if (is.null(solver.control$trace))
     trace = FALSE else trace = solver.control$trace
+  if (is.null(solver.control$restarts))
+    solver.control$restarts = 3
   if (is.null(fit.control$stationarity))
     fit.control$stationarity = FALSE
   if (is.null(fit.control$fixed.se))
