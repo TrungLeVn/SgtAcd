@@ -144,7 +144,7 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   par.UB[1] = logtransform(skew.UB * 0.99, skew.LB, skew.UB,inverse = TRUE)
   # acdOrder
   par = c(par,0.1,0.1,0.5)
-  par.LB = c(par.LB, -1, -1,0+.eps)
+  par.LB = c(par.LB, -1, -1,-1+.eps)
   par.UB = c(par.UB,1,1,1-.eps)
   return(list(skewpars = par, skewpar.LB = par.LB, skewpar.UB = par.UB, sk0 = par[1]))
 }
@@ -162,9 +162,9 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   #par.UB[1] = logtransform(shape1.UB * 0.999, shape1.LB, shape1.UB,inverse = TRUE)
   # alpha1 and alpha2 with lower/upper bounds
   par = c(par,0,0,0.5)
-  par.LB = c(par.LB, -1, -1,0+.eps)
+  par.LB = c(par.LB, -1, -1,-0.9+.eps)
   #par.LB = c(par.LB, -1, -1,0+.eps)
-  par.UB = c(par.UB,1,1,1-.eps)
+  par.UB = c(par.UB,1,1,0.9-.eps)
   return(list(shapepars = par, shapepar.LB = par.LB, shapepar.UB = par.UB, sh0 = par[1]))
 }
 .acdshape2bounds = function(acdOrder, unconpar, distribution, dbounds) {

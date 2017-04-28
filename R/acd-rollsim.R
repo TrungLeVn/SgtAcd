@@ -75,7 +75,7 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
                                        "fixGARCH", "rollind", "spec", "out.sample", "solver","acdconvergence",
                                        "solver.control", "fit.control"), envir = environment())
     tmp = parallel::parLapplyLB(cl = cluster, 1:m, fun = function(i){
-      if(as.logical(trace)) print(paste("Now estimating window:",i,sep = " "))
+      print(paste("Now estimating window:",i,sep = " "))
       zspec = spec
       xspec = gspec
       if(as.logical(trace)) print("Start the GARCH fitting procedure")
@@ -115,8 +115,20 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
         } else{
           fspec <- getspecacd(fit)
           fspec <- setfixedacd(fspec,as.list(coefacd(fit)))
+          fspec <- setboundsacd(fspec,list(shape1 = fit@model$sbounds[3:4],shape2 = fit@model$sbounds[5:6], skew = fit@model$sbounds[1:2]))
           n.old = fit@model$modeldata$T
-          ffilter <- acdfilter(fspec,zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index),n.old = n.old)
+          data = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
+          flt <- acdfilter(fspec,data,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape[1],shape20 = fit@fit$tshape2[1])
+          sigmafilter 	= flt@filter$sigma
+          resfilter 		= flt@filter$residuals
+          zfilter 		= flt@filter$z
+          tskewfilter 	= flt@filter$tskew
+          tshape1filter 	= flt@filter$tshape1
+          tshape2filter   =flt@filter$tshape2
+          tempskewfilter 	= flt@filter$tempskew
+          tempshape1filter = flt@filter$tempshape1
+          tempshape2filter = flt@filter$tempshape2
+          mx = fspec@model$maxOrder
           sig = matrix(NA,ncol = 1, nrow = out.sample[i])
           ret = matrix(NA,ncol = 1, nrow = out.sample[i])
           skewness = matrix(NA,ncol = 1, nrow = out.sample[i])
@@ -124,19 +136,23 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
           if(calculate.VaR) VaR.matrix = matrix(NA,ncol = length(VaR.alpha),nrow = out.sample[i])
           if(as.logical(trace)) print("Start the simulation procedures")
           for(ii in 0:(out.sample[i]-1)){
-            tempPath <- acdpath(fspec,n.sim = horizon,m.sim = m.sim,n.start = burn, presigma = sigmaAcd(ffilter)[n.old+ii],
-                                prereturns = ffilter@model$modeldata$data[n.old +ii],preresiduals = residualsAcd(ffilter)[n.old+ii],
-                                preskew = skew(ffilter)[n.old+ii],preshape1 = shape1(ffilter)[n.old+ii],preshape2 = shape2(ffilter)[n.old +ii])
-            sigma = as.numeric(sqrt(colSums(tempPath@path$sigmaSim^2)))
+            presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
+            preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
+            preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
+            preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
+            prereturns = tail(data[1:(n.old+ii)],         mx)
+            tempPath <- acdpath(fspec,n.sim = horizon,m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
+                                preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
+                                preresiduals = NA, rseed = NA)
             return = as.numeric(colSums(tempPath@path$seriesSim))
-            sig[ii+1,] = mean(sigma)
+            sig[ii+1,] = sqrt(mean(colSums(tempPath@path$sigmaSim^2)))
             ret[ii+1,] = mean(return)
             Lskewness = PerformanceAnalytics::skewness(return)
             Lkurtosis = PerformanceAnalytics::kurtosis(return,method = "excess")
             skewness[ii+1,] = Lskewness
             kurtosis[ii+1,] = Lkurtosis
             if(calculate.VaR) VaR.matrix[ii+1,] = quantile(return,VaR.alpha)
-            rm(list = c("tempPath","sigma","return"))
+            rm(list = c("tempPath","return"))
           }
           if(calculate.VaR){
             y = as.data.frame(cbind(ret, sig, skewness, kurtosis, VaR.matrix))
