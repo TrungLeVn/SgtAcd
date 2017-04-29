@@ -396,7 +396,7 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
     VaR.alpha = model$VaR.alpha
     n.ahead = model$n.ahead
     n.start = model$n.start
-    horizon = model$
+    horizon = model$horizon
     m.sim = model$m.sim
     burn = model$burn
     forecast.length = model$forecast.length
@@ -591,7 +591,11 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
         }
       return(ans)})
     }
+    forecast = object@forecast
     conv = sapply(tmp, FUN = function(x) x$converge)
+    for(i in 1:length(noncidx)){
+      if(conv[i]) forecast[[noncidx[i]]] = tmp[[i]]
+    }
     if(any(!conv)){
       warning("\nnon-converged estimation windows present...resubsmit object with different solver parameters...")
       noncidx = which(!conv)
@@ -627,17 +631,17 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
       return(ans)
     } else{
       noncidx = NULL
-      forc = tmp[[1]]$y
+      forc = forecast[[1]]$y
       if(m>1){
         for(i in 2:m){
-          forc = rbind(forc, tmp[[i]]$y)
+          forc = rbind(forc, forecast[[i]]$y)
         }
       }
       if(keep.coef){
         cf = vector(mode = "list", length = m)
         for(i in 1:m){
           cf[[i]]$index = index[tail(rollind[[i]],1) - out.sample[i]]
-          cf[[i]]$coef = tmp[[i]]$cf
+          cf[[i]]$coef = forecast[[i]]$cf
         }
       } else{
         cf = NULL
@@ -645,7 +649,7 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
       LL = vector(mode = "list", length = m)
       for(i in 1:m){
         LL[[i]]$index = index[tail(rollind[[i]],1) - out.sample[i]]
-        LL[[i]]$log.likelihood = tmp[[i]]$lik
+        LL[[i]]$log.likelihood = forecast[[i]]$lik
       }
       if(calculate.VaR){
         VaR.matrix = forc[,5:NCOL(forc)]
