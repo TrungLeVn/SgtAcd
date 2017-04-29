@@ -373,7 +373,6 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
     if(is.null(fit.control$fixed.se)) fit.control$fixed.se = FALSE
     if(is.null(fit.control$scale)) fit.control$scale = FALSE
     if(is.null(fit.control$n.sim)) fit.control$n.sim = 5000
-    compareGARCH = compareGARCH[1]
     mm = match(names(fit.control), c("stationarity", "fixed.se", "scale", "n.sim"))
     if(any(is.na(mm))){
       idx = which(is.na(mm))
@@ -381,12 +380,29 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
       for(i in 1:length(idx)) enx = c(enx, names(fit.control)[idx[i]])
       warning(paste(c("unidentified option(s) in fit.control:\n", enx), sep="", collapse=" "), call. = FALSE, domain = NULL)
     }
-    xdata = .extractdata(data)
-    data = xdata$data
-    index = xdata$index
-    period = xdata$period
+    model = object@model
+    if(is.null(fixARMA))  fixARMA = model$fixARMA
+    if(is.null(fixGARCH)) fixGARCH = model$fixGARCH
+    if(is.null(compareGARCH)) compareGARCH = model$compareGARCH
+    keep.coef = model$keep.coef
+    if(is.null(spec)) spec = model$spec
+    gspec = .spec2GARCH(spec)
+    data = model$data
+    index = model$index
+    period = model$period
     T = NROW(data)
-    model = spec@model
+    modelinc = spec@model$modelinc
+    calculate.VaR = model$calculate.VaR
+    VaR.alpha = model$VaR.alpha
+    n.ahead = model$n.ahead
+    n.start = model$n.start
+    horizon = model$
+    m.sim = model$m.sim
+    burn = model$burn
+    forecast.length = model$forecast.length
+    refit.every = model$refit.every
+    refit.window = model$refit.window
+    window.size = model$window.size
     #If we want to expand the acdrolling forecast, we should change from here
     if(is.null(n.start)){
       if(is.null(forecast.length)) stop("\nacdroll:--> forecast.length amd n.start are both NULL....try again.")
@@ -416,14 +432,13 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
         rollind = lapply(1:m, FUN = function(i) (1+(i-1)*refit.every):s[i])
       }
     }
-    gspec = .spec2GARCH(spec)
     if( !is.null(cluster) ){
       parallel::clusterEvalQ(cl = cluster, library(SgtAcd))
       parallel::clusterExport(cluster, c("data", "index", "s","refit.every","trace","acdlikelihood","calculate.VaR","VaR.alpha",
                                          "keep.coef",  "gspec", "fixARMA","horizon","m.sim","burn",
                                          "fixGARCH", "rollind", "spec", "out.sample", "solver","acdconvergence",
                                          "solver.control", "fit.control"), envir = environment())
-      tmp = parallel::parLapplyLB(cl = cluster, 1:m, fun = function(i){
+      tmp = parallel::parLapplyLB(cl = cluster, as.list(noncidx), fun = function(i){
         if(as.logical(trace)) print(paste("Now estimating window:",i,sep = " "))
         zspec = spec
         xspec = gspec
@@ -501,9 +516,7 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
         }
         return(ans)})
     } else{
-      tmp = vector(mode = "list", length = m)
-      for(i in 1:m){
-        if(as.logical(trace)) print(paste("Now estimating window:",i,sep = " "))
+      tmp = lapply(as.list(noncidx), FUN = function(i){
         zspec = spec
         xspec = gspec
         gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
@@ -573,10 +586,10 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
               colnames(y) = c("Mu", "Sigma", "skewness", "Kurtosis")
             }
             if(keep.coef) cf = fit@fit$robust.matcoef else cf = NA
-            tmp[[i]] = list(y = y, cf = cf, converge = TRUE, lik = c(acdlikelihood(fit)[1], glik))
+            ans = list(y = y, cf = cf, converge = TRUE, lik = c(acdlikelihood(fit)[1], glik))
           }
         }
-      }
+      return(ans)})
     }
     conv = sapply(tmp, FUN = function(x) x$converge)
     if(any(!conv)){
