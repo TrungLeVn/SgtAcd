@@ -112,6 +112,7 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   }
   if(model$modelinc[11]>0){
     tskew = rep(ipars["skew", 1], n+m)
+    pretskew = ipars["skew",1]
   } else{
     tskew = c(pretskew, rep(0, n))
   }
@@ -131,6 +132,10 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   }
   if(model$modelinc[12]>0){
     tshape1 = rep(ipars["shape1", 1], n+m)
+    pretshape1 = ipars["shape1",1]
+  } else if(sum(model$modelinc[11:13])==2){
+    tshape1 = rep(0,n+m)
+    pretshape1 = 0
   } else{
     tshape1 = c(as.vector(pretshape1), rep(0, n))
   }
@@ -146,8 +151,12 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
       pretshape2 = tail(as.vector(preshape2), m)
     }
   }
-  if(model$modelinc[12]>0){
+  if(model$modelinc[13]>0){
     tshape2 = rep(ipars["shape2", 1], n+m)
+    pretshape2 = ipars["shape2",1]
+  } else if(sum(model$modelinc[11:12]) == 2){
+    tshape2 = rep(0,n+m)
+    pretshape2 = 0
   } else{
     tshape2 = c(as.vector(pretshape2), rep(0, n))
   }
