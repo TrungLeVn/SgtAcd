@@ -79,37 +79,43 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
       zspec = spec
       xspec = gspec
       if(as.logical(trace)) print("Start the GARCH fitting procedure")
-      gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                    solver = "msucminf",solver.control = list(trace = FALSE))
-      if(acdconvergence(gfit)==0){
-        if(fixARMA && fixGARCH){
-          zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
-        } else if(fixARMA && !fixGARCH){
-          zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
-        } else if(!fixARMA && fixGARCH){
-          zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+      if(sum(gspec@model$modelinc[c(14,19,24)])==0){
+        fit = try(acdfit(gspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                         solver = solver, solver.control = solver.control,
+                         fit.control = fit.control), silent=TRUE)
+      }else{
+        gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                      solver = "msucminf",solver.control = list(trace = FALSE))
+        if(acdconvergence(gfit)==0){
+          if(fixARMA && fixGARCH){
+            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+          } else if(fixARMA && !fixGARCH){
+            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
+          } else if(!fixARMA && fixGARCH){
+            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+          } else{
+            zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+          }
+          if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
+          if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
+          if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
+          glik = unname(acdlikelihood(gfit)[1])
         } else{
-          zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+          shape0 = NULL
+          skew0 = NULL
+          glik = NA
         }
-        if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
-        if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
-        if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
-        glik = unname(acdlikelihood(gfit)[1])
-      } else{
-        shape0 = NULL
-        skew0 = NULL
-        glik = NA
+        solver.control$trace = FALSE
+        fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                         solver = solver, solver.control = solver.control,
+                         fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
       }
-      if(as.logical(trace)) print("Start the full fitting procedure")
-      solver.control$trace = FALSE
-      fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                       solver = solver, solver.control = solver.control,
-                       fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
       if(inherits(fit, 'try-error') || acdconvergence(fit)!=0 || is.null(fit@fit$cvar)){
         ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, glik))
       } else{
         # compare GARCH likelihood with ACD model and reject if lik less than
         clik = acdlikelihood(fit)[1]
+        if(sum(gspec@model$modelinc[c(14,19,24)])==0){glik = 0}
         if(!is.na(glik) && clik[1]<glik[1] && compareGARCH=="LL"){
           ans = list(y = NA, cf = NA, converge = FALSE, lik = c(clik, glik))
         } else{
@@ -177,37 +183,43 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
       zspec = spec
       xspec = gspec
       if(as.logical(trace)) print("Start the GARCH fitting procedure")
-      gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                    solver = "msucminf",solver.control = list(trace = FALSE))
-      if(acdconvergence(gfit)==0){
-        if(fixARMA && fixGARCH){
-          zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
-        } else if(fixARMA && !fixGARCH){
-          zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
-        } else if(!fixARMA && fixGARCH){
-          zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+      if(sum(gspec@model$modelinc[c(14,19,24)])==0){
+        fit = try(acdfit(gspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                         solver = solver, solver.control = solver.control,
+                         fit.control = fit.control), silent=TRUE)
+      }else{
+        gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                      solver = "msucminf",solver.control = list(trace = FALSE))
+        if(acdconvergence(gfit)==0){
+          if(fixARMA && fixGARCH){
+            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+          } else if(fixARMA && !fixGARCH){
+            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
+          } else if(!fixARMA && fixGARCH){
+            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+          } else{
+            zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+          }
+          if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
+          if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
+          if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
+          glik = unname(acdlikelihood(gfit)[1])
         } else{
-          zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+          shape0 = NULL
+          skew0 = NULL
+          glik = NA
         }
-        if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
-        if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
-        if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
-        glik = unname(acdlikelihood(gfit)[1])
-      } else{
-        shape0 = NULL
-        skew0 = NULL
-        glik = NA
+        solver.control$trace = FALSE
+        fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                         solver = solver, solver.control = solver.control,
+                         fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
       }
-      solver.control$trace = FALSE
-      if(as.logical(trace)) print("Start the full fitting procedure")
-      fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                       solver = solver, solver.control = solver.control,
-                       fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
       if(inherits(fit, 'try-error') || acdconvergence(fit)!=0 || is.null(fit@fit$cvar)){
         ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, glik))
       } else{
         # compare GARCH likelihood with ACD model and reject if lik less than
         clik = acdlikelihood(fit)[1]
+        if(sum(gspec@model$modelinc[c(14,19,24)])==0){glik = 0}
         if(!is.na(glik) && clik[1]<glik[1] && compareGARCH=="LL"){
           ans = list(y = NA, cf = NA, converge = FALSE, lik = c(clik, glik))
         } else{
@@ -442,36 +454,43 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
         if(as.logical(trace)) print(paste("Now estimating window:",i,sep = " "))
         zspec = spec
         xspec = gspec
-        gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                      solver = "msucminf",solver.control = list(trace = FALSE))
-        if(acdconvergence(gfit)==0){
-          if(fixARMA && fixGARCH){
-            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
-          } else if(fixARMA && !fixGARCH){
-            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
-          } else if(!fixARMA && fixGARCH){
-            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+        if(sum(gspec@model$modelinc[c(14,19,24)])==0){
+          fit = try(acdfit(gspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                           solver = solver, solver.control = solver.control,
+                           fit.control = fit.control), silent=TRUE)
+        }else{
+          gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                        solver = "msucminf",solver.control = list(trace = FALSE))
+          if(acdconvergence(gfit)==0){
+            if(fixARMA && fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+            } else if(fixARMA && !fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
+            } else if(!fixARMA && fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+            } else{
+              zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+            }
+            if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
+            if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
+            if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
+            glik = unname(acdlikelihood(gfit)[1])
           } else{
-            zspec <- setstartacd(spec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:15])]))
+            shape0 = NULL
+            skew0 = NULL
+            glik = NA
           }
-          if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
-          if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
-          if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
-          glik = unname(acdlikelihood(gfit)[1])
-        } else{
-          shape0 = NULL
-          skew0 = NULL
-          glik = NA
+          solver.control$trace = FALSE
+          fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                           solver = solver, solver.control = solver.control,
+                           fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
         }
-        solver.control$trace = FALSE
-        fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                         solver = solver, solver.control = solver.control,
-                         fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
         if(inherits(fit, 'try-error') || acdconvergence(fit)!=0 || is.null(fit@fit$cvar)){
           ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, glik))
         } else{
           # compare GARCH likelihood with ACD model and reject if lik less than
           clik = acdlikelihood(fit)[1]
+          if(sum(gspec@model$modelinc[c(14,19,24)])==0){glik = 0}
           if(!is.na(glik) && clik[1]<glik[1] && compareGARCH=="LL"){
             ans = list(y = NA, cf = NA, converge = FALSE, lik = c(clik, glik))
           } else{
@@ -519,36 +538,43 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
       tmp = lapply(as.list(noncidx), FUN = function(i){
         zspec = spec
         xspec = gspec
-        gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                      solver = "msucminf",solver.control = list(trace = FALSE))
-        if(acdconvergence(gfit)==0){
-          if(fixARMA && fixGARCH){
-            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
-          } else if(fixARMA && !fixGARCH){
-            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
-          } else if(!fixARMA && fixGARCH){
-            zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+        if(sum(gspec@model$modelinc[c(14,19,24)])==0){
+          fit = try(acdfit(gspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                           solver = solver, solver.control = solver.control,
+                           fit.control = fit.control), silent=TRUE)
+        }else{
+          gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                        solver = "msucminf",solver.control = list(trace = FALSE))
+          if(acdconvergence(gfit)==0){
+            if(fixARMA && fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+            } else if(fixARMA && !fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
+            } else if(!fixARMA && fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+            } else{
+              zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+            }
+            if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
+            if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
+            if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
+            glik = unname(acdlikelihood(gfit)[1])
           } else{
-            zspec <- setstartacd(spec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:15])]))
+            shape0 = NULL
+            skew0 = NULL
+            glik = NA
           }
-          if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
-          if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
-          if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
-          glik = unname(acdlikelihood(gfit)[1])
-        } else{
-          shape0 = NULL
-          skew0 = NULL
-          glik = NA
+          solver.control$trace = FALSE
+          fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                           solver = solver, solver.control = solver.control,
+                           fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
         }
-        solver.control$trace = FALSE
-        fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                         solver = solver, solver.control = solver.control,
-                         fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
         if(inherits(fit, 'try-error') || acdconvergence(fit)!=0 || is.null(fit@fit$cvar)){
           ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, glik))
         } else{
           # compare GARCH likelihood with ACD model and reject if lik less than
           clik = acdlikelihood(fit)[1]
+          if(sum(gspec@model$modelinc[c(14,19,24)])==0){glik = 0}
           if(!is.na(glik) && clik[1]<glik[1] && compareGARCH=="LL"){
             ans = list(y = NA, cf = NA, converge = FALSE, lik = c(clik, glik))
           } else{
