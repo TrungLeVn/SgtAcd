@@ -89,7 +89,6 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
     preresiduals = as.vector(tail(residualsAcd(fit)[1:endpoint], m))
     preres = matrix(preresiduals, nrow = m, ncol = m.sim)
   }
-
   # Random Samples from the Distribution are calculated at every recursion in the
   # c-code as they depend on the actual time-varying skew & shape
   z = matrix(0, ncol = m.sim, nrow = n.sim + n.start)
