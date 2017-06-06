@@ -114,7 +114,7 @@ void sacd(int *model, double *pars, int *idx, double *hEst, double *x,
     skew[i] = skewness(tskew[i], tshape1[i],tshape2[i], model[34]);
     kurt[i] = kurtosis(tskew[i], tshape1[i],tshape2[i], model[34]);
     pskew[i] = Pskewness(tskew[i],tshape1[i],tshape2[i], model[34]);
-    armafilter(model, pars, idx, sqrt(fabs(h[i])),skew[i],pskew[i],x, res, zrf, constm, condm, *m, i, *T);
+    armafilter(model, pars, idx, sqrt(fabs(h[i])),tskew[i],pskew[i],x, res, zrf, constm, condm, *m, i, *T);
     e[i] = res[i] * res[i];
     z[i] = res[i]/sqrt(fabs(h[i]));
     LHT[i] = log(ddist(z[i], sqrt(fabs(h[i])), tskew[i], tshape1[i],tshape2[i], model[34]));
@@ -193,7 +193,7 @@ void gjracd(int *model, double *pars, int *idx, double *hEst, double *x,
     skew[i] = skewness(tskew[i], tshape1[i],tshape2[i], model[34]);
     kurt[i] = kurtosis(tskew[i], tshape1[i],tshape2[i], model[34]);
     pskew[i]= Pskewness(tskew[i], tshape1[i],tshape2[i], model[34]);
-    armafilter(model, pars, idx, sqrt(fabs(h[i])),skew[i],pskew[i],x, res, zrf, constm, condm, *m, i, *T);
+    armafilter(model, pars, idx, sqrt(fabs(h[i])),tskew[i],pskew[i],x, res, zrf, constm, condm, *m, i, *T);
     e[i] = res[i] * res[i];
     nres[i] = (res[i] < 0.0) ? e[i] : 0.0;
     z[i] = res[i]/sqrt(fabs(h[i]));
