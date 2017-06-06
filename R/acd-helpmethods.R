@@ -644,7 +644,7 @@ setMethod("show",
             cat(paste("\n-----------------------------------", sep = ""))
             cat(paste("\nARMA Order\t:","(",modelinc[2],",",modelinc[3],")",sep=""))
             cat(paste("\nGARCH-in-mean effect\t:",as.logical(modelinc[4]),sep = ""))
-            cat(paste("\nSkew-in-mean effect\t:",as.logical(modelinc[6]),sep = ""))
+            cat(paste("\nSkew-in-mean effect\t:",as.logical(sum(modelinc[5:6])),sep = ""))
             cat(paste("\nAdjust conditional mean\t:",as.logical(modelinc[36]),sep= ""))
             cat("\n\nConditional Variance Dynamics \t")
             cat(paste("\n-----------------------------------", sep = ""))

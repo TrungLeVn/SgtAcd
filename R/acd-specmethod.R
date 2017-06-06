@@ -18,7 +18,7 @@
 #' @param fixed.pars List of parameters that we want to fixed, i.e, drop out of optimization routines
 #' @return Return an ACDspec,i.e., specification objects.
 #' @export acdspec
-#-----------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
 
 acdspec <- function(variance.model = list(model = "gjrGARCH", garchOrder = c(1, 1), variance.targeting = FALSE),
                    mean.model = list(armaOrder = c(0,0), include.mean = TRUE,archm = FALSE, skm = FALSE, pskm = FALSE,adjm = FALSE),
