@@ -240,8 +240,8 @@ acdfit = function(spec, data, solver = "msucminf", out.sample = 0, solver.contro
     names(parscale) = rownames(ipars[estidx, ])
     if (modelinc[1] > 0)
       parscale["mu"] = abs(mean(zdata))
-    #if (modelinc[7] > 0)
-     # parscale["omega"] = var(zdata)
+    if (modelinc[7] > 0)
+      parscale["omega"] = var(zdata)
     arglist$returnType = "llh"
     #arglist$returnType = "all"
     solution = .acdsolver(solver, pars = ipars[estidx, 1], fun = fun, Ifn = NULL, ILB = NULL, IUB = NULL, gr = NULL, hessian = NULL, parscale = parscale,

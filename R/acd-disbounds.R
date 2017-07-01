@@ -181,7 +181,7 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
   #par.LB[1] = exptransform2(shape2.LB * 1.0001,shape2.LB,shape2.UB,inverse = TRUE)
   #par.UB[2] = exptransform2(shape2.UB * 0.999,shape2.LB,shape2.UB,inverse = TRUE)
     # alpha1 and alpha2 with lower/upper bounds
-    par = c(par,0,0,0)
+    par = c(par,0,0,0.5)
     par.LB = c(par.LB, -2, -2,-1+.eps)
     #par.LB = c(par.LB, -2, -2,0+.eps)
     par.UB = c(par.UB,2,2,1-.eps)

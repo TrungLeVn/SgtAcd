@@ -23,7 +23,12 @@
     ifun = function(pars, arglist){
       alpha = pars[arglist$model$pos.matrix["alpha",1]:arglist$model$pos.matrix["alpha",2]]
       beta  = pars[arglist$model$pos.matrix["beta",1]:arglist$model$pos.matrix["beta",2]]
-      sum(alpha+beta)
+      if(arglist$model$modelinc[10]>0){
+        gamma = pars[arglist$model$pos.matrix["gamma",1]:arglist$model$pos.matrix["gamma",2]]
+        sum(alpha+beta+0.5*gamma)
+      } else{
+        sum(alpha+beta)
+      }
     }
     trace = arglist$trace
     nm = names(pars)
@@ -32,11 +37,19 @@
     control$restarts = NULL
     arglist$transform = FALSE
     dopt = lapply(pars, function(x) list(mean=unname(x), sd = 2*abs(unname(x))))
-    pars = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(2, length(pars)), distr.opt = dopt,
+    parsStart = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(2, length(pars)), distr.opt = dopt,
                      ineqfun = ifun, ineqLB = 1e-12, ineqUB = 0.99,
                      LB = LB, UB = UB, bestN = N, n.sim = arglist$fit.control$n.sim,
                      cluster = cluster, arglist = arglist,rseed = rseed)
-    pars = pars[,-NCOL(pars), drop=FALSE]
+    parsFixed <- parsStart[parsStart[,ncol(parsStart)]!=1.1,]
+    if(nrow(parsFixed)==0){
+      N = 2*N;nsim = 10000
+      parsFixed = Rsolnp::startpars(pars = pars, fun = fun, distr = rep(2, length(pars)), distr.opt = dopt,
+                               ineqfun = ifun, ineqLB = 1e-12, ineqUB = 0.99,
+                               LB = LB, UB = UB, bestN = N, n.sim = nsim,
+                               cluster = cluster, arglist = arglist,rseed = rseed)
+    }
+    pars = parsFixed[,-NCOL(parsFixed), drop=FALSE]
     colnames(pars) = nm
   } else{
     pars = matrix(pars, nrow = 1)
