@@ -1,7 +1,7 @@
 Package: SgtAcd
 Type: Package
 Title: Autoregressive Density Model with Skewed Generalized Student-t distribution
-Version: 0.1.1
+Version: 0.1.2
 Author: Trung Hai Le
 Maintainer: Trung Le <trunglh@hvnh.edu.vn>
 Description: This package performs the ACD model with conditional SGT distribution, inspired by rugarch and racd package of Alexios
