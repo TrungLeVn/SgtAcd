@@ -6,7 +6,7 @@
 acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 500,n.start = NULL, burn = 0,
                       refit.every = 25, refit.window = c("recursive", "moving"),
                       window.size = NULL, solver = "msucminf", fit.control = list(), solver.control = list(trace = FALSE),
-                      calculate.VaR = TRUE, VaR.alpha = c(0.01, 0.05), cluster = NULL,
+                    calculate.VaR = TRUE, VaR.alpha = c(0.01, 0.05), cluster = NULL,
                       keep.coef = TRUE, fixARMA = TRUE, fixGARCH = TRUE,compareGARCH = c("LL","none"), ...)
 {
   UseMethod("acdrollsim")
@@ -73,19 +73,20 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
     parallel::clusterExport(cluster, c("data", "index", "s","refit.every","trace","acdlikelihood","calculate.VaR","VaR.alpha",
                                        "keep.coef",  "gspec", "fixARMA","horizon","m.sim","burn",
                                        "fixGARCH", "rollind", "spec", "out.sample", "solver","acdconvergence",
-                                       "solver.control", "fit.control"), envir = environment())
+                                       "solver.control", "fit.control","print"), envir = environment())
     tmp = parallel::parLapplyLB(cl = cluster, 1:m, fun = function(i){
-      print(paste("Now estimating window:",i,sep = " "))
+      print(i)
       zspec = spec
       xspec = gspec
-      if(as.logical(trace)) print("Start the GARCH fitting procedure")
+      print("Start the GARCH fitting procedure")
       if(sum(spec@model$modelinc[c(14,19,24)])==0){
         fit = try(acdfit(gspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
                          solver = solver, solver.control = solver.control,
                          fit.control = fit.control), silent=TRUE)
       }else{
-        gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                      solver = "msucminf",solver.control = list(trace = FALSE))
+        gfit = try(acdfit(xspec,zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                      solver = solver, solver.control = solver.control,
+                      fit.control = fit.control), silent=TRUE)
         if(acdconvergence(gfit)==0){
           if(fixARMA && fixGARCH){
             zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
@@ -100,12 +101,13 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
           if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
           if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
           glik = unname(acdlikelihood(gfit)[1])
-        } else{
+        } else if(inherits(gfit, 'try-error') || acdconvergence(gfit)!=0){
+          print("Garch fit is fail")
           shape0 = NULL
           skew0 = NULL
           glik = NA
         }
-        solver.control$trace = FALSE
+        print(paste('Now Start the main fit at',i))
         fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
                          solver = solver, solver.control = solver.control,
                          fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
@@ -116,6 +118,7 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
             ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, glik))
         }
       } else{
+        print(paste("Now get Simulations at",i))
         # compare GARCH likelihood with ACD model and reject if lik less than
         clik = acdlikelihood(fit)[1]
         if(sum(spec@model$modelinc[c(14,19,24)])==0){glik = 0}
@@ -175,6 +178,7 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
             colnames(y) = c("Mu", "Sigma", "skewness", "Kurtosis")
           }
           if(keep.coef) cf = fit@fit$robust.matcoef else cf = NA
+          print(paste("Finish at window",i))
           ans = list(y = y, cf = cf, converge = TRUE, lik = c(acdlikelihood(fit)[1], glik))
         }
       }
@@ -182,7 +186,7 @@ acdrollsim = function(spec, data, horizon = 22,m.sim = 10000, forecast.length = 
   } else{
     tmp = vector(mode = "list", length = m)
     for(i in 1:m){
-      if(as.logical(trace)) print(paste("Now estimating window:",i,sep = " "))
+      print(i) # Use to check the errow window
       zspec = spec
       xspec = gspec
       if(as.logical(trace)) print("Start the GARCH fitting procedure")
