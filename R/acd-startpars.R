@@ -17,14 +17,14 @@ TinY = 1e-08
   tmph = 0
   # Get the estimation for ARMA specfication in mean equation.  To be used to find the starting parameters in variance equation
   if (sum(modelinc[4:6]) > 0){
-    tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, pskm = FALSE),
+    tempspec = acdspec(mean.model = list(armaOrder = model$mmodel$armaOrder, archm = FALSE, skm = FALSE, pskm = FALSE,adjm = model$mmodel$adjm),
                       variance.model = list(model = model$vmodel$model,garchOrder = c(modelinc[8],modelinc[9])),
                        distribution.model = list(model = model$dmodel$model,
                                                  skewOrder = model$dmodel$skewOrder,skewmodel = model$dmodel$skewmodel, skewshock = model$dmodel$skewshock,skewshocktype = model$dmodel$skewshocktype,volsk = FALSE,
                                                  shape1Order = model$dmodel$shape1Order,shape1model = model$dmodel$shape1model, shape1shock = model$dmodel$shape1shock,shape1shocktype = model$dmodel$shape1shocktype,volsh1 = FALSE,
                                                  shape2Order = model$dmodel$shape2Order,shape2model = model$dmodel$shape2model, shape2shock = model$dmodel$shape2shock,shape2shocktype = model$dmodel$shape2shocktype,volsh2 = FALSE))
     if(as.logical(trace)){print("Now fitting model with normal mean equation")}
-    tempfit = .acdfit(tempspec,data = data,cluster = cluster)
+    tempfit = acdfit(tempspec,data = data,cluster = cluster)
     if(tempfit@fit$convergence!=0){
       tempfit = acdfit(tempspec, data = data,solver = "mssolnp")
       if(tempfit@fit$convergence!=0){
@@ -36,6 +36,7 @@ TinY = 1e-08
       print(round(tempfit@fit$robust.matcoef,6), digits = 5)
     }
     tmph = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,pskm = tempfit@fit$Pskewness)
+    #tmph = cbind(archm = tempfit@fit$sigma)
      mexdata = NULL
     if(modelinc[4] > 0){
      mexdata = cbind(mexdata,archm = tmph[,"archm"])
@@ -289,7 +290,7 @@ acdstart = function(pars, arglist,cluster) {
     }
   }
   if (modelinc[10] > 0) {
-    pars[idx["gamma", 1]:idx["gamma", 2], 5] = -.5+ TinY
+    pars[idx["gamma", 1]:idx["gamma", 2], 5] = 0 + TinY
     pars[idx["gamma", 1]:idx["gamma", 2], 6] = 1-TinY
     if (is.null(start.pars$gamma))
       pars[idx["gamma", 1]:idx["gamma", 2], 1] = 0.5 else pars[idx["gamma", 1]:idx["gamma", 2], 1] = start.pars$gamma[1]
