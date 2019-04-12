@@ -34,6 +34,7 @@ double dsged(const double value, const double mean, const double sig, const doub
   ans =  kappa/(2.0*sigma*gammafn(1.0/kappa)*exp(pow(fabs(x-mu)/(sigma* (1.0 + lambda*sgn(x-mu))),kappa)));
   return(ans);
 }
+
 double qsged(const double value, const double mean, const double sig, const double sk, const double ku)
 {
   double prob = value;

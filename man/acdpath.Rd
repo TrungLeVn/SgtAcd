@@ -20,3 +20,6 @@ acdpath = function(spec, n.sim = 1000, n.start = 0, m.sim = 1, presigma = NA,
 \value{
 A ACDpath object that will be a simulated process for an ACD process.
 }
+\description{
+ACD simulated path
+}

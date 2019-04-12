@@ -86,7 +86,7 @@ exptransform2 = function(x, lower, upper, rate = 1, inverse = FALSE) {
     shape1.LB = 0.5
     #shape1.LB = 1
     shape1.UB = 10
-    shape2 = 8
+    shape2 = 7
     shape2.LB = 2
     shape2.UB = 50
     include.shape1 = TRUE

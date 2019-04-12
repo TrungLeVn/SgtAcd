@@ -6,3 +6,6 @@
 \usage{
 getspecacd(object)
 }
+\description{
+Get model specification
+}
