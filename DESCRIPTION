@@ -8,6 +8,6 @@ Description: This package performs the ACD model with conditional SGT distributi
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Depends: rugarch, methods
 Imports: xts, Rsolnp, ucminf, numDeriv, zoo, Matrix, PerformanceAnalytics, sgt

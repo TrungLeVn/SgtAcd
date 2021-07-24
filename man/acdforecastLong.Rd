@@ -4,9 +4,19 @@
 \alias{acdforecastLong}
 \title{Autoregressive Conditional Density model forecast}
 \usage{
-acdforecastLong(fitORspec, data = NULL, horizon = 10, n.roll = 0,
-  out.sample = 0, m.sim = 1000, cluster = NULL, skew0 = NULL,
-  shape10 = NULL, skew20 = NULL, ...)
+acdforecastLong(
+  fitORspec,
+  data = NULL,
+  horizon = 10,
+  n.roll = 0,
+  out.sample = 0,
+  m.sim = 1000,
+  cluster = NULL,
+  skew0 = NULL,
+  shape10 = NULL,
+  skew20 = NULL,
+  ...
+)
 }
 \arguments{
 \item{fitORspec}{Either ACDfit or ACDspec object is allowed}
