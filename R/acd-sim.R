@@ -161,7 +161,9 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   }
   # input vectors/matrices
   prePskew = rep(0,m)
-  prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  if(pretskew != 0){
+    prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  }
   h = c(presigma^2, rep(0, n))
   x = c(prereturns, rep(0, n))
   tmpskew = c(pretempskew, rep(0, n))
