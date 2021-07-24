@@ -161,7 +161,9 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   }
   # input vectors/matrices
   prePskew = rep(0,m)
-  prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  if(pretskew != 0){
+    prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  }
   h = c(presigma^2, rep(0, n))
   x = c(prereturns, rep(0, n))
   tmpskew = c(pretempskew, rep(0, n))
@@ -285,7 +287,7 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   n = n.sim + n.start
   model = fit@model
   if(is.na(endpoint)){
-    endpoint = length(model$modeldata$data)
+    endpoint = model$modeldata$T
   }
   modelinc = model$modelinc
   idx = model$pidx
@@ -299,13 +301,13 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
     presigma = as.vector(presigma)
     if(length(presigma)<m) stop(paste("\nacdpath-->error: presigma must be of length ", m, sep=""))
   } else{
-    presigma = as.vector(tail(as.numeric(sigmaAcd(fit)[1:endpoint]), m))
+    presigma = as.vector(tail(as.numeric(sigmaAcd(fit)[1:endpoint]), m)) #take the last sigma as pre-sigma
   }
   if(!is.na(prereturns[1])){
     prereturns = as.vector(prereturns)
     if(length(prereturns)<m) stop(paste("\nuacdsim-->error: prereturns must be of length ", m, sep=""))
   } else{
-    prereturns = as.vector(tail(model$modeldata$data[1:endpoint], m))
+    prereturns = as.vector(tail(model$modeldata$data[1:endpoint], m)) #take the last return (r_{t=1}) as pre-sigma
   }
   if(!is.na(preresiduals[1])){
     preresiduals = as.vector(preresiduals)
@@ -372,14 +374,16 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
       pretshape2 = tail(as.vector(preshape2), m)
     }
   }
-  if(model$modelinc[12]>0){
+  if(model$modelinc[13]>0){
     tshape2 = rep(ipars["shape2", 1], n+m)
   } else{
     tshape2 = c(as.vector(pretshape2), rep(0, n))
   }
   # input vectors/matrices
   prePskew = rep(0,m)
-  prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  if(pretskew != 0){
+    prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  }
   h = c(presigma^2, rep(0, n))
   x = c(prereturns, rep(0, n))
   tmpskew = c(pretempskew, rep(0, n))
@@ -396,7 +400,7 @@ setMethod(f = "acdsim", signature(fit = "ACDfit"), .acdsim)
   }
   constm = matrix(constm, ncol = m.sim, nrow = n + m)
   # MATRIX
-  zz = preres[1:m]/presigma[1:m]
+  zz = preres[1:m]/presigma[1:m] #z_{t-1}
   for(j in 1:m.sim){
     z[1:m, j] = zz
   }

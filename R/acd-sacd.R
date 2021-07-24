@@ -11,8 +11,9 @@
   eps = .Machine$double.eps
   data = arglist$data
   assign("x_pars", pars, envir = arglist$garchenv)
-  if (!is.null(arglist$n.old))
-    Nx = arglist$n.old else Nx = length(data)
+  if (!is.null(arglist$n.old)){
+    Nx = arglist$n.old} else {
+      Nx = length(data)}
   model = arglist$model
   estidx = arglist$estidx
   idx = model$pidx
@@ -29,7 +30,7 @@
   zrf = rx$zrf
   res[is.na(res) | !is.finite(res) | is.nan(res)] = 0
   if( !is.null(arglist$n.old) ){
-    rx = .arfimaxfilteracd(modelinc, ipars[,1], idx,data = data[1:Nx], N = c(m, Nx), arglist$garchenv)
+    rx = .arfimaxfilteracd(modelinc, ipars[,1], idx,data = data[1:Nx], N = c(m, Nx), arglist)
     res2 = rx$res
     res2[is.na(res2) | !is.finite(res2) | is.nan(res2)] = 0
     mvar = mean(res2*res2)

@@ -65,8 +65,8 @@ setMethod("acdfilter", signature(spec = "ACDspec"), .acdfilterswitch)
   #setfixed(spec)<-as.list(pars)
   spec <- setfixedacd(spec,as.list(pars))
   garchenv = new.env(hash = TRUE)
-  #racd_llh = 1
-  #assign("racd_llh", 1, envir = garchenv)
+  racd_llh = 1
+  assign("racd_llh", 1, envir = garchenv)
   arglist = list()
   arglist$n.old = n.old
   arglist$transform = FALSE
@@ -98,7 +98,7 @@ setMethod("acdfilter", signature(spec = "ACDspec"), .acdfilterswitch)
     if(modelinc[14]==1) arglist$skhEst[1] = pars["skcons"] #modelinc[21] is skcons
   }
   if(sum(modelinc[4:6])>0){
-    arglist$tmph  = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,pskm = tempfit@fit$Pskewness)
+    arglist$tmph  = cbind(archm = tempfit@fit$sigma,skm = tempfit@fit$tskew,pskm = tempfit@fit$Pskewness) # What is termfit here? check here
   } else{
     arglist$tmph = 0
   }

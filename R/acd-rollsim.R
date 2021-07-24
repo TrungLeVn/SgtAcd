@@ -3,27 +3,27 @@
 #' @importFrom PerformanceAnalytics skewness kurtosis
 
 #' @export acdrollsim
-acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10000, forecast.length = 500,n.start = NULL, burn = 0,
+acdrollsim = function(spec, data, horizon = c(22,66),m.sim = 10000, forecast.length = 500,n.start = NULL, burn = 0,
                       refit.every = 22, refit.window = c("recursive", "moving"),
                       window.size = NULL, solver = "msucminf", fit.control = list(), solver.control = list(trace = FALSE),
-                    calculate.VaR = FALSE, VaR.alpha = c(0.01, 0.05), cluster = NULL,
+                    calculate.VaR = TRUE, VaR.alpha = c(0.01, 0.05), cluster = NULL,
                       keep.coef = TRUE, fixARMA = TRUE, fixGARCH = TRUE,compareGARCH = c("LL","none"), ...)
 {
   UseMethod("acdrollsim")
 }
-.acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10000, forecast.length = 500, n.start = NULL,burn = 0,
+.acdrollsim = function(spec, data, horizon = c(22,66),m.sim = 10000, forecast.length = 500, n.start = NULL,burn = 0,
                     refit.every = 25, refit.window = c("recursive", "moving"),
                     window.size = NULL, solver = "msucminf", fit.control = list(),solver.control = list(trace = FALSE),
-                    calculate.VaR = FALSE, VaR.alpha = c(0.01,0.05), cluster = NULL,
+                    calculate.VaR = TRUE, VaR.alpha = c(0.01,0.05), cluster = NULL,
                     keep.coef = TRUE, fixARMA = TRUE, fixGARCH = TRUE,compareGARCH = c("LL","none"),...)
 {
   tic = Sys.time()
   if(is.null(solver.control$trace)) trace = FALSE else trace = solver.control$trace
-  if(is.null(solver.control$restarts)) solver.control$restarts = 3
+  if(is.null(solver.control$restarts)) solver.control$restarts = 2
   if(is.null(fit.control$stationarity)) fit.control$stationarity = FALSE
   if(is.null(fit.control$fixed.se)) fit.control$fixed.se = FALSE
   if(is.null(fit.control$scale)) fit.control$scale = FALSE
-  if(is.null(fit.control$n.sim)) fit.control$n.sim = 5000
+  if(is.null(fit.control$n.sim)) fit.control$n.sim = 1000
   compareGARCH = compareGARCH[1]
   mm = match(names(fit.control), c("stationarity", "fixed.se", "scale", "n.sim"))
   if(any(is.na(mm))){
@@ -71,7 +71,7 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
   if( !is.null(cluster) ){
     parallel::clusterEvalQ(cl = cluster, library(SgtAcd))
     parallel::clusterExport(cluster, c("data", "index", "s","refit.every","trace","acdlikelihood","calculate.VaR","VaR.alpha",
-                                       "keep.coef",  "gspec", "fixARMA","horizon","m.sim","burn","maxHorizon",
+                                       "keep.coef",  "gspec", "fixARMA","horizon","m.sim","burn",
                                        "fixGARCH", "rollind", "spec", "out.sample", "solver","acdconvergence",
                                        "solver.control", "fit.control","print"), envir = environment())
     tmp = parallel::parLapply(cl = cluster, 1:m, fun = function(i){
@@ -132,9 +132,8 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
         if(sum(spec@model$modelinc[c(14,19,24)])==0) {
           ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, NA))}else{
             ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, glik))
-        }
+          }
       } else{
-        print(paste("Now get Simulations at",i))
         # compare GARCH likelihood with ACD model and reject if lik less than
         clik = acdlikelihood(fit)[1]
         if(sum(spec@model$modelinc[c(14,19,24)])==0){glik = 0}
@@ -145,8 +144,8 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
           fspec <- setfixedacd(fspec,as.list(coefacd(fit)))
           fspec <- setboundsacd(fspec,list(shape1 = fit@model$sbounds[3:4],shape2 = fit@model$sbounds[5:6], skew = fit@model$sbounds[1:2]))
           n.old = fit@model$modeldata$T
-          data = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
-          flt <- acdfilter(fspec,data,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape1[1],shape20 = fit@fit$tshape2[1])
+          dataflt = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
+          flt <- acdfilter(fspec,dataflt,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape1[1],shape20 = fit@fit$tshape2[1])
           sigmafilter 	= flt@filter$sigma
           resfilter 		= flt@filter$residuals
           zfilter 		= flt@filter$z
@@ -157,7 +156,6 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
           tempshape1filter = flt@filter$tempshape1
           tempshape2filter = flt@filter$tempshape2
           mx = fspec@model$maxOrder
-
           tm = matrix(NA,ncol = length(horizon),nrow = out.sample[i])
           sig = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
           ret = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
@@ -166,44 +164,61 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
           if(calculate.VaR){
             VaR = list()
             for(h in 1:length(horizon)){
-              VaR[[as.character(horizon[h])]] = matrix(NA,ncol = length(VaR.alpha),nrow = out.sample[i])
+              VaR[[as.character(horizon[h])]] = matrix(NA,ncol = length(VaR.alpha)*2,nrow = out.sample[i]) #*2 to compute ES as well
             }
           }
-          for(ii in 0:(out.sample[i]-1)){
-            # Because we will only refit after each out.sample observation. We need to make simulation in each of the point
-            presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
-            preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
-            preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
-            preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
-            prereturns = tail(data[1:(n.old+ii)],         mx)
-            preresiduals = tail(resfilter[1:(n.old+ii)],mx)
-            tempPath <- acdpath(fspec,n.sim = maxHorizon,m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
-                                preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
-                                preresiduals = preresiduals, rseed = NA)
-            for(h in 1:length(horizon)){
-            return = as.numeric(colSums(tempPath@path$seriesSim[1:horizon[h],]))
-            tm[ii+1,h] = sum(return^3)/m.sim
-            sig[ii+1,h] = sqrt(mean(colSums(tempPath@path$sigmaSim[1:horizon[h],]^2)))
-            ret[ii+1,h] = mean(return)
-            skewness[ii+1,h] = PerformanceAnalytics::skewness(return,method = "sample")
-            kurtosis[ii+1,h] = PerformanceAnalytics::kurtosis(return,method = "sample_excess")
-            if(calculate.VaR) VaR[[as.character(horizon[h])]][ii+1,] = quantile(return,VaR.alpha)
+          for(h in 1:length(horizon)){
+            # Number of simulation should be equal to out.sample/horizon
+            for(ii in seq(0,(out.sample[i]-1),by = horizon[h])){
+              presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
+              preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
+              preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
+              preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
+              prereturns = tail(dataflt[1:(n.old+ii)],         mx)
+              preresiduals = tail(resfilter[1:(n.old+ii)],mx)
+              tempPath <- acdpath(fspec,n.sim = horizon[h],m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
+                                  preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
+                                  preresiduals = preresiduals, rseed = NA)
+              if(horizon[h] == 1){
+                return = as.numeric(tempPath@path$seriesSim[horizon[h],])
+                sig[ii+1,h] = sqrt(mean(tempPath@path$sigmaSim[horizon[h],]^2))
+              } else{
+                return = as.numeric(colSums(tempPath@path$seriesSim[1:horizon[h],]))
+                sig[ii+1,h] = sqrt(mean(colSums(tempPath@path$sigmaSim[1:horizon[h],]^2)))
+              }
+              tm[ii+1,h] = sum(return^3)/m.sim
+              ret[ii+1,h] = mean(return)
+              skewness[ii+1,h] = PerformanceAnalytics::skewness(return,method = "sample")
+              kurtosis[ii+1,h] = PerformanceAnalytics::kurtosis(return,method = "sample_excess")
+              if(calculate.VaR){
+                VaRest <- quantile(return,VaR.alpha)
+                ESest <- VaRest
+                for(a in 1:length(VaRest)){
+                  ESest[a] <- mean(return[return < VaRest[a]])
+                }
+                VaR[[as.character(horizon[h])]][ii+1,1:length(VaRest)] = VaRest
+                VaR[[as.character(horizon[h])]][ii+1,(length(VaRest)+1):(2*length(VaRest))] =ESest
+              }
             }
             rm(list = c("tempPath","return"))
           }
           forecast = list()
           if(calculate.VaR){
             for(h in 1:length(horizon)){
-            out = as.data.frame(cbind(ret[,h], sig[,h],tm[,h],skewness[,h], kurtosis[,h], VaR[[h]]))
-            rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])
-            colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis",as.character(VaR.alpha))
-            forecast[[as.character(horizon[h])]] = out
+              out = as.data.frame(cbind(ret[seq(1,(out.sample[i]),by = horizon[h]),h], sig[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                        tm[seq(1,(out.sample[i]),by = horizon[h]),h],skewness[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                        kurtosis[seq(1,(out.sample[i]),by = horizon[h]),h],matrix(VaR[[h]][seq(1,(out.sample[i]),by = horizon[h]),],ncol = length(VaR.alpha)*2)))
+              rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])[seq(1,(out.sample[i]),by = horizon[h])]
+              colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis",c(paste("VaR",VaR.alpha),paste("ES",VaR.alpha)))
+              forecast[[as.character(horizon[h])]] = out
             }
           } else {
             for(h in 1:length(horizon)){
-              out = as.data.frame(cbind(ret[,h], sig[,h],tm[,h],skewness[,h], kurtosis[,h]))
-              rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])
-              colnames(out) = c("Mu", "Sigma","TM","Skewness", "Kurtosis")
+              out = as.data.frame(cbind(ret[seq(1,(out.sample[i]),by = horizon[h]),h], sig[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                        tm[seq(1,(out.sample[i]),by = horizon[h]),h],skewness[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                        kurtosis[seq(1,(out.sample[i]),by = horizon[h]),h]))
+              rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])[seq(1,(out.sample[i]),by = horizon[h])]
+              colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis")
               forecast[[as.character(horizon[h])]] = out
             }
           }
@@ -216,20 +231,41 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
       })
   } else{
     tmp = list()
-    print(paste("doing window",i,sep = ""))
-
     for(i in 1:m){
+      print(paste("doing window",i,sep = ""))
       zspec = spec
       xspec = gspec
       if(as.logical(trace)) print("Start the GARCH fitting procedure")
       if(sum(spec@model$modelinc[c(14,19,24)])==0){
-        fit = try(acdfit(spec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+        fit = try(acdfit(gspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
                          solver = solver, solver.control = solver.control,
                          fit.control = fit.control), silent=TRUE)
       }else{
-        gfit = acdfit(xspec,  zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
-                      solver = "msucminf",solver.control = list(trace = FALSE))
-        if(acdconvergence(gfit)==0){
+        gfit = try(acdfit(xspec,zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                          solver = solver, solver.control = solver.control,
+                          fit.control = fit.control), silent=TRUE)
+        if(inherits(gfit, 'try-error') || acdconvergence(gfit)!=0){
+          gfit = try(acdfit(xspec,zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                            solver = "mssolnp", solver.control = list(restarts = 10),
+                            fit.control = list(n.sim = 10000)), silent=TRUE)
+          if(acdconvergence(gfit)==0){
+            if(fixARMA && fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+            } else if(fixARMA && !fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
+            } else if(!fixARMA && fixGARCH){
+              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+            } else{
+              zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+            }
+            if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
+            if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
+            if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
+            glik = unname(acdlikelihood(gfit)[1])
+          }else if(inherits(gfit, 'try-error') || acdconvergence(gfit)!=0){
+            stop("\nacdroll:--> GARCh model can not be converged.\n")
+          }
+        }else{
           if(fixARMA && fixGARCH){
             zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
           } else if(fixARMA && !fixGARCH){
@@ -243,12 +279,8 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
           if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
           if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
           glik = unname(acdlikelihood(gfit)[1])
-        } else{
-          shape0 = NULL
-          skew0 = NULL
-          glik = NA
         }
-        solver.control$trace = FALSE
+        print(paste('Now Start the main fit at',i))
         fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
                          solver = solver, solver.control = solver.control,
                          fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
@@ -269,8 +301,8 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
           fspec <- setfixedacd(fspec,as.list(coefacd(fit)))
           fspec <- setboundsacd(fspec,list(shape1 = fit@model$sbounds[3:4],shape2 = fit@model$sbounds[5:6], skew = fit@model$sbounds[1:2]))
           n.old = fit@model$modeldata$T
-          data = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
-          flt <- acdfilter(fspec,data,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape1[1],shape20 = fit@fit$tshape2[1])
+          dataflt = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
+          flt <- acdfilter(fspec,dataflt,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape1[1],shape20 = fit@fit$tshape2[1])
           sigmafilter 	= flt@filter$sigma
           resfilter 		= flt@filter$residuals
           zfilter 		= flt@filter$z
@@ -281,7 +313,6 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
           tempshape1filter = flt@filter$tempshape1
           tempshape2filter = flt@filter$tempshape2
           mx = fspec@model$maxOrder
-
           tm = matrix(NA,ncol = length(horizon),nrow = out.sample[i])
           sig = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
           ret = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
@@ -290,44 +321,61 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
           if(calculate.VaR){
             VaR = list()
             for(h in 1:length(horizon)){
-              VaR[[as.character(horizon[h])]] = matrix(NA,ncol = length(VaR.alpha),nrow = out.sample[i])
+              VaR[[as.character(horizon[h])]] = matrix(NA,ncol = length(VaR.alpha)*2,nrow = out.sample[i]) #*2 to compute ES as well
             }
           }
-          for(ii in 0:(out.sample[i]-1)){
-            # Because we will only refit after each out.sample observation. We need to make simulation in each of the point
-            presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
-            preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
-            preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
-            preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
-            prereturns = tail(data[1:(n.old+ii)],         mx)
-            preresiduals = tail(resfilter[1:(n.old+ii)],mx)
-            tempPath <- acdpath(fspec,n.sim = maxHorizon,m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
-                                preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
-                                preresiduals = preresiduals, rseed = NA)
-            for(h in 1:length(horizon)){
-              return = as.numeric(colSums(tempPath@path$seriesSim[1:horizon[h],]))
+          for(h in 1:length(horizon)){
+            # Number of simulation should be equal to out.sample/horizon
+            for(ii in seq(0,(out.sample[i]-1),by = horizon[h])){
+              presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
+              preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
+              preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
+              preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
+              prereturns = tail(dataflt[1:(n.old+ii)],         mx)
+              preresiduals = tail(resfilter[1:(n.old+ii)],mx)
+              tempPath <- acdpath(fspec,n.sim = horizon[h],m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
+                                  preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
+                                  preresiduals = preresiduals, rseed = NA)
+              if(horizon[h] == 1){
+                return = as.numeric(tempPath@path$seriesSim[horizon[h],])
+                sig[ii+1,h] = sqrt(mean(tempPath@path$sigmaSim[horizon[h],]^2))
+              } else{
+                return = as.numeric(colSums(tempPath@path$seriesSim[1:horizon[h],]))
+                sig[ii+1,h] = sqrt(mean(colSums(tempPath@path$sigmaSim[1:horizon[h],]^2)))
+              }
               tm[ii+1,h] = sum(return^3)/m.sim
-              sig[ii+1,h] = sqrt(mean(colSums(tempPath@path$sigmaSim[1:horizon[h],]^2)))
               ret[ii+1,h] = mean(return)
               skewness[ii+1,h] = PerformanceAnalytics::skewness(return,method = "sample")
               kurtosis[ii+1,h] = PerformanceAnalytics::kurtosis(return,method = "sample_excess")
-              if(calculate.VaR) VaR[[as.character(horizon[h])]][ii+1,] = quantile(return,VaR.alpha)
+              if(calculate.VaR){
+                VaRest <- quantile(return,VaR.alpha)
+                ESest <- VaRest
+                for(a in 1:length(VaRest)){
+                  ESest[a] <- mean(return[return < VaRest[a]])
+                }
+                VaR[[as.character(horizon[h])]][ii+1,1:length(VaRest)] = VaRest
+                VaR[[as.character(horizon[h])]][ii+1,(length(VaRest)+1):(2*length(VaRest))] =ESest
+              }
             }
             rm(list = c("tempPath","return"))
           }
           forecast = list()
           if(calculate.VaR){
             for(h in 1:length(horizon)){
-              out = as.data.frame(cbind(ret[,h], sig[,h],tm[,h],skewness[,h], kurtosis[,h], VaR[[h]]))
-              rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])
-              colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis",as.character(VaR.alpha))
+              out = as.data.frame(cbind(ret[seq(1,(out.sample[i]),by = horizon[h]),h], sig[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                        tm[seq(1,(out.sample[i]),by = horizon[h]),h],skewness[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                        kurtosis[seq(1,(out.sample[i]),by = horizon[h]),h],matrix(VaR[[h]][seq(1,(out.sample[i]),by = horizon[h]),],ncol = length(VaR.alpha)*2)))
+              rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])[seq(1,(out.sample[i]),by = horizon[h])]
+              colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis",c(paste("VaR",VaR.alpha),paste("ES",VaR.alpha)))
               forecast[[as.character(horizon[h])]] = out
             }
           } else {
             for(h in 1:length(horizon)){
-              out = as.data.frame(cbind(ret[,h], sig[,h],tm[,h],skewness[,h], kurtosis[,h]))
-              rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])
-              colnames(out) = c("Mu", "Sigma","TM","Skewness", "Kurtosis")
+              out = as.data.frame(cbind(ret[seq(1,(out.sample[i]),by = horizon[h]),h], sig[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                        tm[seq(1,(out.sample[i]),by = horizon[h]),h],skewness[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                        kurtosis[seq(1,(out.sample[i]),by = horizon[h]),h]))
+              rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])[seq(1,(out.sample[i]),by = horizon[h])]
+              colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis")
               forecast[[as.character(horizon[h])]] = out
             }
           }
@@ -350,7 +398,6 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
     model$data = data
     model$index = index
     model$period = period
-    model$maxHorizon = maxHorizon
     model$horizon = horizon
     model$m.sim = m.sim
     model$burn = burn
@@ -401,7 +448,6 @@ acdrollsim = function(spec, data, maxHorizon = 66, horizon = c(22,66),m.sim = 10
     model$data = data
     model$index = index
     model$period = period
-    model$maxHorizon = maxHorizon
     model$n.ahead = horizon
     model$m.sim = m.sim
     model$burn = burn
@@ -478,7 +524,6 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
     VaR.alpha = model$VaR.alpha
     n.ahead = model$n.ahead
     n.start = model$n.start
-    maxHorizon = model$maxHorizon
     horizon = model$horizon
     m.sim = model$m.sim
     burn = model$burn
@@ -501,18 +546,196 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
                                                                       "spec", "out.sample", "solver","acdconvergence",
                                                                       "solver.control", "fit.control","print","noncidx","cf"),
                              .combine = list,.multicombine = TRUE)%dopar%{
-        print(paste("Now estimating window:",i,sep = " "))
+                               print(paste("doing window",i,sep = ""))
+                               zspec = spec
+                               xspec = gspec
+                               print("Start the GARCH fitting procedure")
+                               if(sum(spec@model$modelinc[c(14,19,24)])==0){
+                                 fit = try(acdfit(gspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                                                  solver = solver, solver.control = solver.control,
+                                                  fit.control = fit.control), silent=TRUE)
+                               }else{
+                                 gfit = try(acdfit(xspec,zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                                                   solver = solver, solver.control = solver.control,
+                                                   fit.control = fit.control), silent=TRUE)
+                                 if(inherits(gfit, 'try-error') || acdconvergence(gfit)!=0){
+                                   gfit = try(acdfit(xspec,zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                                                     solver = "mssolnp", solver.control = list(restarts = 10),
+                                                     fit.control = list(n.sim = 10000)), silent=TRUE)
+                                   if(acdconvergence(gfit)==0){
+                                     if(fixARMA && fixGARCH){
+                                       zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+                                     } else if(fixARMA && !fixGARCH){
+                                       zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
+                                     } else if(!fixARMA && fixGARCH){
+                                       zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+                                     } else{
+                                       zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+                                     }
+                                     if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
+                                     if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
+                                     if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
+                                     glik = unname(acdlikelihood(gfit)[1])
+                                   }else if(inherits(gfit, 'try-error') || acdconvergence(gfit)!=0){
+                                     stop("\nacdroll:--> GARCh model can not be converged.\n")
+                                   }
+                                 }else{
+                                   if(fixARMA && fixGARCH){
+                                     zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+                                   } else if(fixARMA && !fixGARCH){
+                                     zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
+                                   } else if(!fixARMA && fixGARCH){
+                                     zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+                                   } else{
+                                     zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+                                   }
+                                   if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
+                                   if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
+                                   if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
+                                   glik = unname(acdlikelihood(gfit)[1])
+                                 }
+                                 print(paste('Now Start the main fit at',i))
+                                 fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                                                  solver = solver, solver.control = solver.control,
+                                                  fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
+                               }
+                               if(inherits(fit, 'try-error') || acdconvergence(fit)!=0 || is.null(fit@fit$cvar)){
+                                 if(sum(spec@model$modelinc[c(14,19,24)])==0) {
+                                   ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, NA))}else{
+                                     ans = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, glik))
+                                   }
+                               } else{
+                                 # compare GARCH likelihood with ACD model and reject if lik less than
+                                 clik = acdlikelihood(fit)[1]
+                                 if(sum(spec@model$modelinc[c(14,19,24)])==0){glik = 0}
+                                 if(!is.na(glik) && clik[1]<glik[1] && compareGARCH=="LL"){
+                                   ans = list(y = NA, cf = NA, converge = FALSE, lik = c(clik, glik))
+                                 } else{
+                                   fspec <- getspecacd(fit)
+                                   fspec <- setfixedacd(fspec,as.list(coefacd(fit)))
+                                   fspec <- setboundsacd(fspec,list(shape1 = fit@model$sbounds[3:4],shape2 = fit@model$sbounds[5:6], skew = fit@model$sbounds[1:2]))
+                                   n.old = fit@model$modeldata$T
+                                   dataflt = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
+                                   flt <- acdfilter(fspec,dataflt,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape1[1],shape20 = fit@fit$tshape2[1])
+                                   sigmafilter 	= flt@filter$sigma
+                                   resfilter 		= flt@filter$residuals
+                                   zfilter 		= flt@filter$z
+                                   tskewfilter 	= flt@filter$tskew
+                                   tshape1filter 	= flt@filter$tshape1
+                                   tshape2filter   =flt@filter$tshape2
+                                   tempskewfilter 	= flt@filter$tempskew
+                                   tempshape1filter = flt@filter$tempshape1
+                                   tempshape2filter = flt@filter$tempshape2
+                                   mx = fspec@model$maxOrder
+                                   tm = matrix(NA,ncol = length(horizon),nrow = out.sample[i])
+                                   sig = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
+                                   ret = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
+                                   skewness = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
+                                   kurtosis = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
+                                   if(calculate.VaR){
+                                     VaR = list()
+                                     for(h in 1:length(horizon)){
+                                       VaR[[as.character(horizon[h])]] = matrix(NA,ncol = length(VaR.alpha)*2,nrow = out.sample[i]) #*2 to compute ES as well
+                                     }
+                                   }
+                                   for(h in 1:length(horizon)){
+                                     # Number of simulation should be equal to out.sample/horizon
+                                     for(ii in seq(0,(out.sample[i]-1),by = horizon[h])){
+                                       presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
+                                       preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
+                                       preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
+                                       preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
+                                       prereturns = tail(dataflt[1:(n.old+ii)],         mx)
+                                       preresiduals = tail(resfilter[1:(n.old+ii)],mx)
+                                       tempPath <- acdpath(fspec,n.sim = horizon[h],m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
+                                                           preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
+                                                           preresiduals = preresiduals, rseed = NA)
+                                       if(horizon[h] == 1){
+                                         return = as.numeric(tempPath@path$seriesSim[horizon[h],])
+                                         sig[ii+1,h] = sqrt(mean(tempPath@path$sigmaSim[horizon[h],]^2))
+                                       } else{
+                                         return = as.numeric(colSums(tempPath@path$seriesSim[1:horizon[h],]))
+                                         sig[ii+1,h] = sqrt(mean(colSums(tempPath@path$sigmaSim[1:horizon[h],]^2)))
+                                       }
+                                       tm[ii+1,h] = sum(return^3)/m.sim
+                                       ret[ii+1,h] = mean(return)
+                                       skewness[ii+1,h] = PerformanceAnalytics::skewness(return,method = "sample")
+                                       kurtosis[ii+1,h] = PerformanceAnalytics::kurtosis(return,method = "sample_excess")
+                                       if(calculate.VaR){
+                                         VaRest <- quantile(return,VaR.alpha)
+                                         ESest <- VaRest
+                                         for(a in 1:length(VaRest)){
+                                           ESest[a] <- mean(return[return < VaRest[a]])
+                                         }
+                                         VaR[[as.character(horizon[h])]][ii+1,1:length(VaRest)] = VaRest
+                                         VaR[[as.character(horizon[h])]][ii+1,(length(VaRest)+1):(2*length(VaRest))] =ESest
+                                       }
+                                     }
+                                     rm(list = c("tempPath","return"))
+                                   }
+                                   forecast = list()
+                                   if(calculate.VaR){
+                                     for(h in 1:length(horizon)){
+                                       out = as.data.frame(cbind(ret[seq(1,(out.sample[i]),by = horizon[h]),h], sig[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                                                 tm[seq(1,(out.sample[i]),by = horizon[h]),h],skewness[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                                                 kurtosis[seq(1,(out.sample[i]),by = horizon[h]),h],matrix(VaR[[h]][seq(1,(out.sample[i]),by = horizon[h]),],ncol = length(VaR.alpha)*2)))
+                                       rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])[seq(1,(out.sample[i]),by = horizon[h])]
+                                       colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis",c(paste("VaR",VaR.alpha),paste("ES",VaR.alpha)))
+                                       forecast[[as.character(horizon[h])]] = out
+                                     }
+                                   } else {
+                                     for(h in 1:length(horizon)){
+                                       out = as.data.frame(cbind(ret[seq(1,(out.sample[i]),by = horizon[h]),h], sig[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                                                 tm[seq(1,(out.sample[i]),by = horizon[h]),h],skewness[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                                                 kurtosis[seq(1,(out.sample[i]),by = horizon[h]),h]))
+                                       rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])[seq(1,(out.sample[i]),by = horizon[h])]
+                                       colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis")
+                                       forecast[[as.character(horizon[h])]] = out
+                                     }
+                                   }
+                                   if(keep.coef) cf = fit@fit$robust.matcoef else cf = NA
+                                   print(paste("Finish at window",i))
+                                   ans = list(forecast = forecast, cf = cf, converge = TRUE, lik = c(acdlikelihood(fit)[1], glik))
+                                 }
+                               }
+        }
+    } else{
+      tmp = list()
+      for(i in 1:m){
+        print(paste("doing window",i,sep = ""))
         zspec = spec
         xspec = gspec
         if(as.logical(trace)) print("Start the GARCH fitting procedure")
         if(sum(spec@model$modelinc[c(14,19,24)])==0){
-          fit = try(acdfit(gspec, zoo::zoo(data[rollind[[noncidx[i]]]], index[rollind[[noncidx[i]]]]), out.sample = out.sample[noncidx[i]],
+          fit = try(acdfit(gspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
                            solver = solver, solver.control = solver.control,
                            fit.control = fit.control), silent=TRUE)
         }else{
-          gfit = acdfit(xspec,  zoo::zoo(data[rollind[[noncidx[i]]]], index[rollind[[noncidx[i]]]]), out.sample = out.sample[noncidx[i]],
-                        solver = "msucminf",solver.control = list(trace = FALSE))
-          if(acdconvergence(gfit)==0){
+          gfit = try(acdfit(xspec,zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                            solver = solver, solver.control = solver.control,
+                            fit.control = fit.control), silent=TRUE)
+          if(inherits(gfit, 'try-error') || acdconvergence(gfit)!=0){
+            gfit = try(acdfit(xspec,zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
+                              solver = "mssolnp", solver.control = list(restarts = 10),
+                              fit.control = list(n.sim = 10000)), silent=TRUE)
+            if(acdconvergence(gfit)==0){
+              if(fixARMA && fixGARCH){
+                zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+              } else if(fixARMA && !fixGARCH){
+                zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
+              } else if(!fixARMA && fixGARCH){
+                zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
+              } else{
+                zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
+              }
+              if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
+              if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
+              if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
+              glik = unname(acdlikelihood(gfit)[1])
+            }else if(inherits(gfit, 'try-error') || acdconvergence(gfit)!=0){
+              stop("\nacdroll:--> GARCh model can not be converged.\n")
+            }
+          }else{
             if(fixARMA && fixGARCH){
               zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
             } else if(fixARMA && !fixGARCH){
@@ -526,13 +749,9 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
             if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
             if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
             glik = unname(acdlikelihood(gfit)[1])
-          } else{
-            shape0 = NULL
-            skew0 = NULL
-            glik = NA
           }
-          solver.control$trace = FALSE
-          fit = try(acdfit(zspec, zoo::zoo(data[rollind[[noncidx[i]]]], index[rollind[[noncidx[i]]]]), out.sample = out.sample[noncidx[i]],
+          print(paste('Now Start the main fit at',i))
+          fit = try(acdfit(zspec, zoo::zoo(data[rollind[[i]]], index[rollind[[i]]]), out.sample = out.sample[i],
                            solver = solver, solver.control = solver.control,
                            fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
         }
@@ -552,8 +771,8 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
             fspec <- setfixedacd(fspec,as.list(coefacd(fit)))
             fspec <- setboundsacd(fspec,list(shape1 = fit@model$sbounds[3:4],shape2 = fit@model$sbounds[5:6], skew = fit@model$sbounds[1:2]))
             n.old = fit@model$modeldata$T
-            data = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
-            flt <- acdfilter(fspec,data,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape1[1],shape20 = fit@fit$tshape2[1])
+            dataflt = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
+            flt <- acdfilter(fspec,dataflt,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape1[1],shape20 = fit@fit$tshape2[1])
             sigmafilter 	= flt@filter$sigma
             resfilter 		= flt@filter$residuals
             zfilter 		= flt@filter$z
@@ -564,174 +783,73 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
             tempshape1filter = flt@filter$tempshape1
             tempshape2filter = flt@filter$tempshape2
             mx = fspec@model$maxOrder
-            tm = matrix(NA,ncol = length(horizon),nrow = out.sample[noncidx[i]])
-            sig = matrix(NA,ncol = length(horizon), nrow = out.sample[noncidx[i]])
-            ret = matrix(NA,ncol = length(horizon), nrow = out.sample[noncidx[i]])
-            skewness = matrix(NA,ncol = length(horizon), nrow = out.sample[noncidx[i]])
-            kurtosis = matrix(NA,ncol = length(horizon), nrow = out.sample[noncidx[i]])
+            tm = matrix(NA,ncol = length(horizon),nrow = out.sample[i])
+            sig = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
+            ret = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
+            skewness = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
+            kurtosis = matrix(NA,ncol = length(horizon), nrow = out.sample[i])
             if(calculate.VaR){
               VaR = list()
               for(h in 1:length(horizon)){
-                VaR[[as.character(horizon[h])]] = matrix(NA,ncol = length(VaR.alpha),nrow = out.sample[noncidx[i]])
+                VaR[[as.character(horizon[h])]] = matrix(NA,ncol = length(VaR.alpha)*2,nrow = out.sample[i]) #*2 to compute ES as well
               }
             }
-            for(ii in 0:(out.sample[noncidx[i]]-1)){
-              # Because we will only refit after each out.sample observation. We need to make simulation in each of the point
-              presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
-              preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
-              preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
-              preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
-              prereturns = tail(data[1:(n.old+ii)],         mx)
-              preresiduals = tail(resfilter[1:(n.old+ii)],mx)
-              tempPath <- acdpath(fspec,n.sim = maxHorizon,m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
-                                  preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
-                                  preresiduals = preresiduals, rseed = NA)
-              for(h in 1:length(horizon)){
-                return = as.numeric(colSums(tempPath@path$seriesSim[1:horizon[h],]))
+            for(h in 1:length(horizon)){
+              # Number of simulation should be equal to out.sample/horizon
+              for(ii in seq(0,(out.sample[i]-1),by = horizon[h])){
+                presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
+                preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
+                preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
+                preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
+                prereturns = tail(dataflt[1:(n.old+ii)],         mx)
+                preresiduals = tail(resfilter[1:(n.old+ii)],mx)
+                tempPath <- acdpath(fspec,n.sim = horizon[h],m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
+                                    preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
+                                    preresiduals = preresiduals, rseed = NA)
+                if(horizon[h] == 1){
+                  return = as.numeric(tempPath@path$seriesSim[horizon[h],])
+                  sig[ii+1,h] = sqrt(mean(tempPath@path$sigmaSim[horizon[h],]^2))
+                } else{
+                  return = as.numeric(colSums(tempPath@path$seriesSim[1:horizon[h],]))
+                  sig[ii+1,h] = sqrt(mean(colSums(tempPath@path$sigmaSim[1:horizon[h],]^2)))
+                }
                 tm[ii+1,h] = sum(return^3)/m.sim
-                sig[ii+1,h] = sqrt(mean(colSums(tempPath@path$sigmaSim[1:horizon[h],]^2)))
                 ret[ii+1,h] = mean(return)
                 skewness[ii+1,h] = PerformanceAnalytics::skewness(return,method = "sample")
                 kurtosis[ii+1,h] = PerformanceAnalytics::kurtosis(return,method = "sample_excess")
-                if(calculate.VaR) VaR[[as.character(horizon[h])]][ii+1,] = quantile(return,VaR.alpha)
+                if(calculate.VaR){
+                  VaRest <- quantile(return,VaR.alpha)
+                  ESest <- VaRest
+                  for(a in 1:length(VaRest)){
+                    ESest[a] <- mean(return[return < VaRest[a]])
+                  }
+                  VaR[[as.character(horizon[h])]][ii+1,1:length(VaRest)] = VaRest
+                  VaR[[as.character(horizon[h])]][ii+1,(length(VaRest)+1):(2*length(VaRest))] =ESest
+                }
               }
               rm(list = c("tempPath","return"))
             }
             forecast = list()
             if(calculate.VaR){
               for(h in 1:length(horizon)){
-                out = as.data.frame(cbind(ret[,h], sig[,h],tm[,h],skewness[,h], kurtosis[,h], VaR[[h]]))
-                rownames(out) = tail(as.character(index[rollind[[noncidx[i]]]]),out.sample[noncidx[i]])
-                colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis",as.character(VaR.alpha))
+                out = as.data.frame(cbind(ret[seq(1,(out.sample[i]),by = horizon[h]),h], sig[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                          tm[seq(1,(out.sample[i]),by = horizon[h]),h],skewness[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                          kurtosis[seq(1,(out.sample[i]),by = horizon[h]),h],matrix(VaR[[h]][seq(1,(out.sample[i]),by = horizon[h]),],ncol = length(VaR.alpha)*2)))
+                rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])[seq(1,(out.sample[i]),by = horizon[h])]
+                colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis",c(paste("VaR",VaR.alpha),paste("ES",VaR.alpha)))
                 forecast[[as.character(horizon[h])]] = out
               }
             } else {
               for(h in 1:length(horizon)){
-                out = as.data.frame(cbind(ret[,h], sig[,h],tm[,h],skewness[,h], kurtosis[,h]))
-                rownames(out) = tail(as.character(index[rollind[[noncidx[i]]]]),out.sample[noncidx[i]])
-                colnames(out) = c("Mu", "Sigma","TM","Skewness", "Kurtosis")
+                out = as.data.frame(cbind(ret[seq(1,(out.sample[i]),by = horizon[h]),h], sig[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                          tm[seq(1,(out.sample[i]),by = horizon[h]),h],skewness[seq(1,(out.sample[i]),by = horizon[h]),h],
+                                          kurtosis[seq(1,(out.sample[i]),by = horizon[h]),h]))
+                rownames(out) = tail(as.character(index[rollind[[i]]]),out.sample[i])[seq(1,(out.sample[i]),by = horizon[h])]
+                colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis")
                 forecast[[as.character(horizon[h])]] = out
               }
             }
-            if(keep.coef) cf[[noncidx[i]]] = fit@fit$robust.matcoef else cf[[noncidx[i]]] = NA
-            ans = list(forecast = forecast, cf = cf, converge = TRUE, lik = c(acdlikelihood(fit)[1], glik))
-          }
-          }
-        }
-    } else{
-      tmp = list()
-      for(i in 1:m){
-        zspec = spec
-        xspec = gspec
-        if(sum(spec@model$modelinc[c(14,19,24)])==0){
-          fit = try(acdfit(spec, zoo::zoo(data[rollind[[noncidx[i]]]], index[rollind[[noncidx[i]]]]), out.sample = out.sample[noncidx[i]],
-                           solver = solver, solver.control = solver.control,
-                           fit.control = fit.control), silent=TRUE)
-        }else{
-          gfit = acdfit(xspec,  zoo::zoo(data[rollind[[noncidx[i]]]], index[rollind[[noncidx[i]]]]), out.sample = out.sample[noncidx[i]],
-                        solver = "msucminf",solver.control = list(trace = FALSE))
-          if(acdconvergence(gfit)==0){
-            if(fixARMA && fixGARCH){
-              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
-            } else if(fixARMA && !fixGARCH){
-              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:6])]))
-            } else if(!fixARMA && fixGARCH){
-              zspec <- setfixedacd(zspec,as.list(coefacd(gfit)[(sum(gspec@model$modelinc[1:6])+1):sum(gspec@model$modelinc[7:10])]))
-            } else{
-              zspec <- setstartacd(zspec,as.list(coefacd(gfit)[1:sum(gspec@model$modelinc[1:10])]))
-            }
-            if(xspec@model$modelinc[11]>0) skew0 = coefacd(gfit)["skew"] else skew0 = NULL
-            if(xspec@model$modelinc[12]>0) shape10 = coefacd(gfit)["shape1"] else shape10 = NULL
-            if(xspec@model$modelinc[13]>0) shape20 = coefacd(gfit)["shape2"] else shape20 = NULL
-            glik = unname(acdlikelihood(gfit)[1])
-          } else{
-            shape0 = NULL
-            skew0 = NULL
-            glik = NA
-          }
-          solver.control$trace = FALSE
-          fit = try(acdfit(zspec, zoo::zoo(data[rollind[[noncidx[i]]]], index[rollind[[noncidx[i]]]]), out.sample = out.sample[noncidx[i]],
-                           solver = solver, solver.control = solver.control,
-                           fit.control = fit.control, shape10 = shape10, shape20 = shape20,skew0 = skew0), silent=TRUE)
-        }
-        if(inherits(fit, 'try-error') || acdconvergence(fit)!=0 || is.null(fit@fit$cvar)){
-          if(sum(spec@model$modelinc[c(14,19,24)])==0) {
-            tmp[[i]] = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, NA))}else{
-              tmp[[i]] = list(y = NA, cf = NA, converge = FALSE, lik = c(NA, glik))
-            }
-        } else{
-          # compare GARCH likelihood with ACD model and reject if lik less than
-          clik = acdlikelihood(fit)[1]
-          if(sum(spec@model$modelinc[c(14,19,24)])==0){glik = 0}
-          if(!is.na(glik) && clik[1]<glik[1] && compareGARCH=="LL"){
-            ans = list(y = NA, cf = NA, converge = FALSE, lik = c(clik, glik))
-          } else{
-            fspec <- getspecacd(fit)
-            fspec <- setfixedacd(fspec,as.list(coefacd(fit)))
-            fspec <- setboundsacd(fspec,list(shape1 = fit@model$sbounds[3:4],shape2 = fit@model$sbounds[5:6], skew = fit@model$sbounds[1:2]))
-            n.old = fit@model$modeldata$T
-            data = zoo::zoo(fit@model$modeldata$data,order.by = fit@model$modeldata$index)
-            flt <- acdfilter(fspec,data,n.old = n.old,skew0 = fit@fit$tskew[1], shape10 = fit@fit$tshape1[1],shape20 = fit@fit$tshape2[1])
-            sigmafilter 	= flt@filter$sigma
-            resfilter 		= flt@filter$residuals
-            zfilter 		= flt@filter$z
-            tskewfilter 	= flt@filter$tskew
-            tshape1filter 	= flt@filter$tshape1
-            tshape2filter   =flt@filter$tshape2
-            tempskewfilter 	= flt@filter$tempskew
-            tempshape1filter = flt@filter$tempshape1
-            tempshape2filter = flt@filter$tempshape2
-            mx = fspec@model$maxOrder
-            tm = matrix(NA,ncol = length(horizon),nrow = out.sample[noncidx[i]])
-            sig = matrix(NA,ncol = length(horizon), nrow = out.sample[noncidx[i]])
-            ret = matrix(NA,ncol = length(horizon), nrow = out.sample[noncidx[i]])
-            skewness = matrix(NA,ncol = length(horizon), nrow = out.sample[noncidx[i]])
-            kurtosis = matrix(NA,ncol = length(horizon), nrow = out.sample[noncidx[i]])
-            if(calculate.VaR){
-              VaR = list()
-              for(h in 1:length(horizon)){
-                VaR[[as.character(horizon[h])]] = matrix(NA,ncol = length(VaR.alpha),nrow = out.sample[i])
-              }
-            }
-            for(ii in 0:(out.sample[noncidx[i]]-1)){
-              # Because we will only refit after each out.sample observation. We need to make simulation in each of the point
-              presig     = tail(sigmafilter[1:(n.old+ii)],  mx)
-              preskew    = tail(tskewfilter[1:(n.old+ii)],  mx)
-              preshape1   = tail(tshape1filter[1:(n.old+ii)], mx)
-              preshape2  = tail(tshape2filter[1:(n.old+ii)], mx)
-              prereturns = tail(data[1:(n.old+ii)],         mx)
-              preresiduals = tail(resfilter[1:(n.old+ii)],mx)
-              tempPath <- acdpath(fspec,n.sim = maxHorizon,m.sim = m.sim,n.start = burn,  presigma = presig, preskew = preskew,
-                                  preshape1 = preshape1,preshape2 = preshape2, prereturns = prereturns,
-                                  preresiduals = preresiduals, rseed = NA)
-              for(h in 1:length(horizon)){
-                return = as.numeric(colSums(tempPath@path$seriesSim[1:horizon[h],]))
-                tm[ii+1,h] = sum(return^3)/m.sim
-                sig[ii+1,h] = sqrt(mean(colSums(tempPath@path$sigmaSim[1:horizon[h],]^2)))
-                ret[ii+1,h] = mean(return)
-                skewness[ii+1,h] = PerformanceAnalytics::skewness(return,method = "sample")
-                kurtosis[ii+1,h] = PerformanceAnalytics::kurtosis(return,method = "sample_excess")
-                if(calculate.VaR) VaR[[as.character(horizon[h])]][ii+1,] = quantile(return,VaR.alpha)
-              }
-              rm(list = c("tempPath","return"))
-            }
-            forecast = list()
-            if(calculate.VaR){
-              for(h in 1:length(horizon)){
-                out = as.data.frame(cbind(ret[,h], sig[,h],tm[,h],skewness[,h], kurtosis[,h], VaR[[h]]))
-                rownames(out) = tail(as.character(index[rollind[[noncidx[i]]]]),out.sample[noncidx[i]])
-                colnames(out) = c("Mu", "Sigma","TM", "Skewness", "Kurtosis",as.character(VaR.alpha))
-                forecast[[as.character(horizon[h])]] = out
-              }
-            } else {
-              for(h in 1:length(horizon)){
-                out = as.data.frame(cbind(ret[,h], sig[,h],tm[,h],skewness[,h], kurtosis[,h]))
-                rownames(out) = tail(as.character(index[rollind[[noncidx[i]]]]),out.sample[noncidx[i]])
-                colnames(out) = c("Mu", "Sigma","TM","Skewness", "Kurtosis")
-                forecast[[as.character(horizon[h])]] = out
-              }
-            }
-            if(keep.coef) cf[[noncidx[i]]] = fit@fit$robust.matcoef else cf[[noncidx[i]]] = NA
+            if(keep.coef) cf = fit@fit$robust.matcoef else cf = NA
             tmp[[i]] = list(forecast = forecast, cf = cf, converge = TRUE, lik = c(acdlikelihood(fit)[1], glik))
           }
         }
@@ -757,7 +875,6 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
       model$data = data
       model$index = index
       model$period = period
-      model$maxHorizon = maxHorizon
       model$horizon = horizon
       model$m.sim = m.sim
       model$burn = burn
@@ -787,7 +904,6 @@ acdresumeSim = function(object, spec = NULL, solver = "mssolnp", fit.control = l
       model$data = data
       model$index = index
       model$period = period
-      model$maxHorizon = maxHorizon
       model$n.ahead = horizon
       model$m.sim = m.sim
       model$burn = burn

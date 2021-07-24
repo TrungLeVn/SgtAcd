@@ -172,7 +172,9 @@ Pskew = function(lambda,kappa,nu,distribution)
     tshape2 = c(pretshape2, rep(0, n))
   }
   prePskew = rep(0,m)
-  prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  if(pretskew != 0){
+    prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  }
   # input vectors/matrices
   h = c(presigma^2, rep(0, n))
   x = c(prereturns, rep(0, n))
@@ -390,7 +392,7 @@ Pskew = function(lambda,kappa,nu,distribution)
   }
   # Set Pre-shape2 parameters
   pretshape2 = pretempshape2 = rep(0, m)
-  if(model$modelinc[19]>0)
+  if(model$modelinc[24]>0)
   {
     if( is.na(preshape2[1]) ){
       # The tempshape[1] is the transformed shape parameter of the
@@ -402,13 +404,15 @@ Pskew = function(lambda,kappa,nu,distribution)
       pretshape2 = tail(as.vector(preshape2), m)
     }
   }
-  if(model$modelinc[12]>0){
+  if(model$modelinc[13]>0){
     tshape2 = rep(ipars["shape2", 1], n+m)
   } else{
     tshape2 = c(pretshape2, rep(0, n))
   }
   prePskew = rep(0,m)
-  prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  if(pretskew != 0){
+    prePskew = Pskew(pretskew,pretshape1,pretshape2,distribution)
+  }
   # input vectors/matrices
   h = c(presigma^2, rep(0, n))
   x = c(prereturns, rep(0, n))
@@ -416,6 +420,7 @@ Pskew = function(lambda,kappa,nu,distribution)
   tmpshape1 = c(pretempshape1, rep(0, n))
   tmpshape2 = c(pretempshape2,rep(0,n))
   constmean = ipars[idx["mu",1]:idx["mu",2], 1]
+  pskew = c(prePskew,rep(0,n))
   # Taking into account the initial m periods with prePskew and Presigma. From m+1, the varying part in conditional mean
   # depends on varying Pskew and Sigma
   if(modelinc[36]>0){
